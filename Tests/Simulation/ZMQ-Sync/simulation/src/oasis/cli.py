@@ -3,12 +3,14 @@
 import argparse
 from dataclasses import dataclass
 from datetime import datetime
+import json
 import os
 
 from .apsim import ApsimController
 from .simulation import Simulation
 from .plots import plot_vwc_layer, plot_vwc_field_grid
 from .config import generate_csv_from_grist, generate_data
+from .met import MetGenerator
 
 
 def client(args):
@@ -57,6 +59,27 @@ def kraww(args):
     generate_csv_from_grist(grist, args.path)
 
 
+def generate_met(args):
+    """Generate met data
+
+    See argparser set_defaults() (https://docs.python.org/3/library/argparse.html#sub-commands)
+    """
+
+    # parse json
+    config_path = args.config
+    with open(config_path, "r", encoding="utf-8") as f:
+        config = json.load(f)
+
+    start = datetime.fromisoformat(config["start_date"])
+    end = datetime.fromisoformat(config["end_date"])
+
+    met_generator = MetGenerator(start, end, "constant", config["lat"], config["lon"])
+
+    # save file
+    met_path = args.path
+    met_generator.save(met_path)
+
+
 def entry():
     """Entry point for oasis"""
 
@@ -78,6 +101,11 @@ def entry():
     config_parser = subparsers.add_parser("config", help="Generates field config csv")
     config_parser.add_argument("path", type=str, help="Path to save csv")
     config_parser.set_defaults(func=kraww)
+
+    met_parser = subparsers.add_parser("met", help="Generate met data")
+    met_parser.add_argument("config", type=str, help="Path to config json")
+    met_parser.add_argument("path", type=str, help="Path to save met data")
+    met_parser.set_defaults(func=generate_met)
 
     args = parser.parse_args()
     args.func(args)
