@@ -7,7 +7,7 @@ import os
 
 from .apsim import ApsimController
 from .simulation import Simulation
-from .plots import plot_vwc_layer, plot_vwc_field_grid
+from .plots import plot_vwc_layer, plot_vwc_field_grid, plot_heatmap
 from .config import generate_csv_from_grist, generate_data
 
 
@@ -30,8 +30,9 @@ def client(args):
     # Plot simulation.
     # TODO(nubby): Integrate irrigation with colors.
     # plot_oasis(apsim)
-    plot_vwc_layer(ts_arr, vwc_arr)
-    plot_vwc_field_grid(ts_arr, vwc_arr)
+    #plot_vwc_layer(ts_arr, vwc_arr)
+    #plot_vwc_field_grid(ts_arr, vwc_arr)
+    plot_heatmap(args.anim, ts_arr, vwc_arr)
 
 
 def kraww(args):
@@ -73,6 +74,7 @@ def entry():
         "--port", type=int, default=27746, help="Server port number"
     )
     client_parser.add_argument("config", type=str, help="Configuration CSV")
+    client_parser.add_argument("anim", type=str, help="Path to save heatmap animation")
     client_parser.set_defaults(func=client)
 
     config_parser = subparsers.add_parser("config", help="Generates field config csv")
