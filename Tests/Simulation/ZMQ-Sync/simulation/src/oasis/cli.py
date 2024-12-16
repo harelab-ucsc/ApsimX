@@ -3,6 +3,7 @@
 import argparse
 from dataclasses import dataclass
 from datetime import datetime
+import numpy as np
 import os
 
 from .apsim import ApsimController
@@ -26,12 +27,15 @@ def client(args):
 
     # add any commands here
     ts_arr, vwc_arr = sim.run()
+    if args.output:
+        np.save(args.output, vwc_arr)
 
     # Plot simulation.
     # TODO(nubby): Integrate irrigation with colors.
     # plot_oasis(apsim)
-    plot_vwc_layer(ts_arr, vwc_arr)
-    plot_vwc_field_grid(ts_arr, vwc_arr)
+    if not args.quiet:
+        plot_vwc_layer(ts_arr, vwc_arr)
+        plot_vwc_field_grid(ts_arr, vwc_arr)
 
 
 def kraww(args):
@@ -66,11 +70,14 @@ def entry():
     subparsers = parser.add_subparsers(help="Subcommand", required=True)
 
     client_parser = subparsers.add_parser("client", help="Runs oasis client")
+    client_parser.add_argument("--interactive", action="store_true",
+                               help="Plot vwc arrays")
+    client_parser.add_argument("--output", type=str, help="Output directory for numpy array")
     client_parser.add_argument(
-        "--addr", type=str, default="0.0.0.0", help="Server address"
+        "--addr", type=str, default="0.0.0.0", help="Server address (default: 0.0.0.0"
     )
     client_parser.add_argument(
-        "--port", type=int, default=27746, help="Server port number"
+        "--port", type=int, default=27746, help="Server port number (default: 27746)"
     )
     client_parser.add_argument("config", type=str, help="Configuration CSV")
     client_parser.set_defaults(func=client)
