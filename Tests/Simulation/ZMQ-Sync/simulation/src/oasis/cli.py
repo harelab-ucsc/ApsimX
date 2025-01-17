@@ -10,6 +10,7 @@ from .apsim import ApsimController
 from .simulation import Simulation
 from .plots import plot_vwc_layer, plot_vwc_field_grid
 from .config import generate_csv_from_grist, generate_data
+from .raster import Rasterize
 
 
 def client(args):
@@ -60,6 +61,21 @@ def kraww(args):
     grist = generate_data(configs)
     generate_csv_from_grist(grist, args.path)
 
+def raster(args):
+    """Generate tiff files vwc numpy array
+
+    See argparser set_defaults() (https://docs.python.org/3/library/argparse.html#sub-commands)
+    """
+
+    raster_arry = np.load(args.input)
+    raster = Rasterize(
+        raster_arry,
+        xlim=(-75.5838, -75.5833),
+        ylim=(37.7427, 37.7448),
+        epsg=4326,
+    )
+
+    raster.save(args.output, "")
 
 def entry():
     """Entry point for oasis"""
@@ -85,6 +101,11 @@ def entry():
     config_parser = subparsers.add_parser("config", help="Generates field config csv")
     config_parser.add_argument("path", type=str, help="Path to save csv")
     config_parser.set_defaults(func=kraww)
+
+    raster_parser = subparsers.add_parser("raster", help="Generates tiff files")
+    raster_parser.add_argument("input", type=str, help="Input numpy file")
+    raster_parser.add_argument("output", type=str, help="Output directory for tiff files")
+    raster_parser.set_defaults(func=raster)
 
     args = parser.parse_args()
     args.func(args)
