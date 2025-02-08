@@ -3,11 +3,12 @@
 import argparse
 from dataclasses import dataclass
 from datetime import datetime
+import json
 import os
 
 from .apsim import ApsimController
 from .simulation import Simulation
-from .plots import plot_vwc_layer, plot_vwc_field_grid
+from .plots import plot_vwc_layer, plot_vwc_field_grid, plot_heatmap
 from .config import generate_csv_from_grist, generate_data
 from .metompkin import MetompkinConverter
 
@@ -31,8 +32,9 @@ def client(args):
     # Plot simulation.
     # TODO(nubby): Integrate irrigation with colors.
     # plot_oasis(apsim)
-    plot_vwc_layer(ts_arr, vwc_arr)
-    plot_vwc_field_grid(ts_arr, vwc_arr)
+    #plot_vwc_layer(ts_arr, vwc_arr)
+    #plot_vwc_field_grid(ts_arr, vwc_arr)
+    plot_heatmap(args.anim, ts_arr, vwc_arr)
 
 
 def kraww(args):
@@ -82,6 +84,7 @@ def entry():
         "--port", type=int, default=27746, help="Server port number"
     )
     client_parser.add_argument("config", type=str, help="Configuration CSV")
+    client_parser.add_argument("anim", type=str, help="Path to save heatmap animation")
     client_parser.set_defaults(func=client)
 
     config_parser = subparsers.add_parser("config", help="Generates field config csv")
@@ -92,6 +95,11 @@ def entry():
     metompkin_parser.add_argument("path", type=str, help="Path to metopkin data")
     metompkin_parser.add_argument("json", type=str, help="Suffix of geojson files")
     metompkin_parser.set_defaults(func=metompkin)
+
+    met_parser = subparsers.add_parser("met", help="Generate met data")
+    met_parser.add_argument("config", type=str, help="Path to config json")
+    met_parser.add_argument("path", type=str, help="Path to save met data")
+    met_parser.set_defaults(func=generate_met)
 
     args = parser.parse_args()
     args.func(args)

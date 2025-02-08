@@ -1,7 +1,10 @@
 import matplotlib.pyplot as plt
 from matplotlib.figure import Axes
+from matplotlib.animation import ArtistAnimation, FFMpegWriter
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from mpl_toolkits.axes_grid1 import ImageGrid
 import numpy as np
+from collections.abc import Iterable
 
 from .simulation import FieldNode
 from .apsim import ApsimController
@@ -147,6 +150,56 @@ def plot_oasis(controller: ApsimController):
     h2ox.set_title("Sample Apsim Field Total H2O Volumes")
     plt.tight_layout()
     plt.show()
+
+
+def plot_heatmap(path : str, ts_arr, vwc_arr, show=True):
+    # get the number of layers
+    num_layers = vwc_arr.shape[3]
+
+    fig = plt.figure(figsize=(8.5, 11))
+    axs = ImageGrid(fig, 111, nrows_ncols=(num_layers, 1), axes_pad=0.1)
+
+    # loop over timesteps
+    artists = []
+    for idx, ts in enumerate(ts_arr):
+        frame_artists = []
+
+        idx_text = axs[0].text(1.05, 0.85, f"idx: {idx}", transform=axs[0].transAxes)
+        frame_artists.append(idx_text)
+
+        time_text = axs[0].text(1.05, 0.70, f"ts: {ts}", transform=axs[0].transAxes)
+        frame_artists.append(time_text)
+
+        # update each layer
+        for layer_idx in range(num_layers):
+            ax = axs[layer_idx]
+            cax = ax.imshow(
+                vwc_arr[idx, :, :, layer_idx],
+                aspect="equal",
+                cmap="viridis",
+                vmin=0,
+                vmax=0.5,
+            )
+            ax.set_ylabel(f"Layer {layer_idx}")
+
+            frame_artists.append(cax)
+
+        fig.suptitle("Volumetric water content by layer")
+
+        # run on first loop
+        if idx == 0:
+            cbar = fig.colorbar(cax, ax=axs)
+            cbar.set_label("Volumetric Water Content")
+
+        artists.append(frame_artists)
+
+    plt.tight_layout()
+
+    ani = ArtistAnimation(fig=fig, artists=artists, interval=50)
+    ani.save(path)
+
+    if show:
+        plt.show()
 
 
 def plot_vwc_layer(ts_arr, vwc_arr):
