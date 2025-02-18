@@ -10,7 +10,7 @@ from .apsim import ApsimController
 from .simulation import Simulation
 from .plots import plot_vwc_layer, plot_vwc_field_grid, plot_heatmap
 from .config import generate_csv_from_grist, generate_data
-from .met import MetGenerator
+from .metompkin import MetompkinConverter
 
 
 def client(args):
@@ -59,27 +59,14 @@ def kraww(args):
     grist = generate_data(configs)
     generate_csv_from_grist(grist, args.path)
 
-
-def generate_met(args):
-    """Generate met data
-
+def metompkin(args):
+    """Create a geojson files for Metompkin farm dataset
+    
     See argparser set_defaults() (https://docs.python.org/3/library/argparse.html#sub-commands)
     """
 
-    # parse json
-    config_path = args.config
-    with open(config_path, "r", encoding="utf-8") as f:
-        config = json.load(f)
-
-    start = datetime.fromisoformat(config["start_date"])
-    end = datetime.fromisoformat(config["end_date"])
-
-    met_generator = MetGenerator(start, end, "constant", config["lat"], config["lon"])
-
-    # save file
-    met_path = args.path
-    met_generator.save(met_path)
-
+    converter = MetompkinConverter()
+    converter.convert(args.path, args.json)
 
 def entry():
     """Entry point for oasis"""
@@ -103,6 +90,11 @@ def entry():
     config_parser = subparsers.add_parser("config", help="Generates field config csv")
     config_parser.add_argument("path", type=str, help="Path to save csv")
     config_parser.set_defaults(func=kraww)
+    
+    metompkin_parser = subparsers.add_parser("metompkin", help="Convert metompkin dataset")
+    metompkin_parser.add_argument("path", type=str, help="Path to metopkin data")
+    metompkin_parser.add_argument("json", type=str, help="Suffix of geojson files")
+    metompkin_parser.set_defaults(func=metompkin)
 
     met_parser = subparsers.add_parser("met", help="Generate met data")
     met_parser.add_argument("config", type=str, help="Path to config json")
