@@ -26,9 +26,35 @@ Any recent PC with a minimum of 8Gb of RAM.
 Binary releases are available via our [registration system](https://registration.apsim.info).
 
 ## OASIS Modifications
+### @author jLab
+### @author John Madden (jtmadden@ucsc.edu) <- POC
+
+### Background
 
 OASIS is a UCSC project, funded by a USDA NIFA seed grant, to extend APSIM to a voxelized 3D representation interfaced through a server/Python client pair. This step is preparatory work, before using APSIM as a physics engine for procedural generation of realistic test environments.
 
+### Installation
+
+```
+python3 -m venv .venv
+. .venv/bin/activate
+pip3 install -e [PATH to simulation/]
+```
+
+### Setting Up
+
+To generate a field configuration file [based on the `ZMQ-InteractiveVariables`
+simulation setup]:
+
+```
+oasis config
+```
+
+### Running the Client
+
+```
+oasis client
+```
 
 ### World Representation
 
