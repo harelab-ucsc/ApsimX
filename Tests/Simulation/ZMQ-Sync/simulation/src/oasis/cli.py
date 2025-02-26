@@ -26,7 +26,7 @@ def client(args):
 
     sim = Simulation(apsim, args.config)
 
-    sim.add_action(datetime(2023, 1, 1), "irrigate", [1, 1, 0, 10000])
+    #sim.add_action(datetime(2023, 1, 1), "irrigate", [1, 1, 0, 10000])
 
     # add any commands here
     ts_arr, vwc_arr = sim.run()
@@ -43,7 +43,7 @@ def client(args):
     # nubby's code 
     #plot_vwc_layer(ts_arr, vwc_arr)
     #plot_vwc_field_grid(ts_arr, vwc_arr)
-    plot_heatmap(args.anim, ts_arr, vwc_arr)
+    #plot_heatmap(args.anim, ts_arr, vwc_arr)
 
 
 def kraww(args):
@@ -60,8 +60,8 @@ def kraww(args):
     # Number of fields in each dimension of spacetime.
     @dataclass
     class GristConfigs:
-        dim_x: int = 4
-        dim_y: int = 4
+        dim_x: int = 16
+        dim_y: int = 16
         dim_z: int = 1
 
     configs = GristConfigs()
@@ -77,8 +77,8 @@ def raster(args):
     raster_arry = np.load(args.input)
     raster = Rasterize(
         raster_arry,
-        xlim=(-75.5838, -75.5833),
-        ylim=(37.7427, 37.7448),
+        xlim=(-75.6402, -75.5801),
+        ylim=(37.7205, 37.7628),
         epsg=4326,
     )
 
@@ -112,7 +112,7 @@ def entry():
         "--port", type=int, default=27746, help="Server port number (default: 27746)"
     )
     client_parser.add_argument("config", type=str, help="Configuration CSV")
-    client_parser.add_argument("anim", type=str, help="Path to save heatmap animation")
+    #client_parser.add_argument("anim", type=str, help="Path to save heatmap animation")
     client_parser.set_defaults(func=client)
 
     config_parser = subparsers.add_parser("config", help="Generates field config csv")
