@@ -17,12 +17,14 @@ dependencies = [
   "matplotlib",
   "numpy",
   "fiona",
+  "rasterio",
 ]
 requires-python = ">=3.7"
 
 [project-optional-dependencies]
 dev = [
   "ruff",
+  "black"
 ]
 
 [project.scripts]
