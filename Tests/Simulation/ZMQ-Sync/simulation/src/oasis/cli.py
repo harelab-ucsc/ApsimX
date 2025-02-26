@@ -4,13 +4,15 @@ import argparse
 from dataclasses import dataclass
 from datetime import datetime
 import numpy as np
+import json
 import os
 
 from .apsim import ApsimController
 from .simulation import Simulation
-from .plots import plot_vwc_layer, plot_vwc_field_grid
+from .plots import plot_vwc_layer, plot_vwc_field_grid, plot_heatmap
 from .config import generate_csv_from_grist, generate_data
 from .raster import Rasterize
+from .metompkin import MetompkinConverter
 
 
 def client(args):
@@ -34,9 +36,14 @@ def client(args):
     # Plot simulation.
     # TODO(nubby): Integrate irrigation with colors.
     # plot_oasis(apsim)
-    if not args.quiet:
-        plot_vwc_layer(ts_arr, vwc_arr)
-        plot_vwc_field_grid(ts_arr, vwc_arr)
+    #if not args.quiet:
+    #    plot_vwc_layer(ts_arr, vwc_arr)
+    #    plot_vwc_field_grid(ts_arr, vwc_arr)
+    
+    # nubby's code 
+    #plot_vwc_layer(ts_arr, vwc_arr)
+    #plot_vwc_field_grid(ts_arr, vwc_arr)
+    plot_heatmap(args.anim, ts_arr, vwc_arr)
 
 
 def kraww(args):
@@ -77,6 +84,15 @@ def raster(args):
 
     raster.save(args.output, "")
 
+def metompkin(args):
+    """Create a geojson files for Metompkin farm dataset
+    
+    See argparser set_defaults() (https://docs.python.org/3/library/argparse.html#sub-commands)
+    """
+
+    converter = MetompkinConverter()
+    converter.convert(args.path, args.json)
+
 def entry():
     """Entry point for oasis"""
 
@@ -96,11 +112,17 @@ def entry():
         "--port", type=int, default=27746, help="Server port number (default: 27746)"
     )
     client_parser.add_argument("config", type=str, help="Configuration CSV")
+    client_parser.add_argument("anim", type=str, help="Path to save heatmap animation")
     client_parser.set_defaults(func=client)
 
     config_parser = subparsers.add_parser("config", help="Generates field config csv")
     config_parser.add_argument("path", type=str, help="Path to save csv")
     config_parser.set_defaults(func=kraww)
+    
+    metompkin_parser = subparsers.add_parser("metompkin", help="Convert metompkin dataset")
+    metompkin_parser.add_argument("path", type=str, help="Path to metopkin data")
+    metompkin_parser.add_argument("json", type=str, help="Suffix of geojson files")
+    metompkin_parser.set_defaults(func=metompkin)
 
     raster_parser = subparsers.add_parser("raster", help="Generates tiff files")
     raster_parser.add_argument("input", type=str, help="Input numpy file")
