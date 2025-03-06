@@ -75,7 +75,8 @@ class Farm(object):
 
         @param  coordinates ([float, float])  Latitude, longitude.
         """
-        # TODO(nubby): Make these meaningful
+        # TODO(nubby):  Make these meaningful; currently a placeholder.
+        # NOTE:         DO NOT USE THIS FUNCTION YET.
         self.boundary["NE"] = coordinates
         self.boundary["NW"] = coordinates
         self.boundary["SE"] = coordinates
