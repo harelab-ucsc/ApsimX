@@ -447,7 +447,7 @@ def compare_sim2real(IRLFarm: Farm, SimFarm: Farm):
 """ingest(data_path) -> data
 Extract data from provided directory or return an empty array.
 """
-def ingest(data_path: str) -> tuple[Sensor, Sensor]:
+def ingest(data_path: str) -> tuple[Farm, Farm]:
     IRLFarm = Farm()
     SimFarm = Farm()
     data_files = os.listdir(path=data_path)
@@ -464,7 +464,7 @@ def ingest(data_path: str) -> tuple[Sensor, Sensor]:
         SimFarm=SimFarm,
         crs=crs
     )
-    compare_sim2real(SimFarm=SimFarm, IRLFarm=IRLFarm)
+    return [IRLFarm, SimFarm]
 
 
 """quail(data_path)
@@ -473,7 +473,11 @@ Generate plots comparing real and sim data.
 @param  data_path   (str)   Path to directory containing data.
 """
 def quail(data_path: str):
-    ingest(data_path)
+    # Convert real and sim data into a coherent format.
+    IRLFarm, SimFarm = ingest(data_path)
+    # Plot comparisons for sim and real data.
+    compare_sim2real(SimFarm=SimFarm, IRLFarm=IRLFarm)
+    # Bird.
     print("𓅪")
 
 if __name__ == "__main__":
