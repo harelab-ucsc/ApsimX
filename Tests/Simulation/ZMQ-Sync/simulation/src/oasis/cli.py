@@ -43,7 +43,7 @@ def client(args):
     # nubby's code 
     #plot_vwc_layer(ts_arr, vwc_arr)
     #plot_vwc_field_grid(ts_arr, vwc_arr)
-    plot_heatmap(args.anim, ts_arr, vwc_arr)
+    #plot_heatmap(args.anim, ts_arr, vwc_arr)
 
 
 def kraww(args):

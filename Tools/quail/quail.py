@@ -151,7 +151,7 @@ def _ingest_sensor_data_geojson(data_paths: list[str], IRLFarm: Farm):
 def _ingest_sensor_data_csv(data_path: str, IRLFarm: Farm):
     # Set the path to farm sensor data.
     farm_data_path = None
-    for file in data_files:
+    for file in data_path:
         if "csv" in file:
             farm_data_path = file
             break

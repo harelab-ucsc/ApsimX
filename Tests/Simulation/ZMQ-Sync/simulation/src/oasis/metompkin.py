@@ -5,6 +5,7 @@ Each sensor has it's own layer
 Source to download dataset: https://www.hydroshare.org/resource/c414b4b08e2647da9ae5d70dc1aae60c/
 """
 
+import os
 import csv
 import fiona
 
@@ -65,6 +66,7 @@ class MetompkinConverter:
         sensor_names = set()
 
         # get header
+        path = os.path.join(os.path.expanduser('~'), 'ApsimX', path)
         with open(path, "r", newline="") as csvfile:
             reader = csv.reader(csvfile)
             header_row = next(reader)
@@ -122,6 +124,7 @@ class MetompkinConverter:
         depth = self.find_depth(name)
 
         # open file
+        in_path = os.path.join(os.path.expanduser('~'), 'ApsimX', in_path)
         with open(in_path, "r", newline="") as csvfile:
             reader = csv.reader(csvfile)
 
