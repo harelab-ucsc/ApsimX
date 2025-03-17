@@ -44,6 +44,16 @@ The size of a field and the height of each voxel column will be specifed by the 
 Our physics model couples soil columns at the surface, only. Subsurface water transport is currently modeled as laterally independent of neighboring voxels (all transport is strictly vertical).
 Surface water transport is implemented by passing runoff equally among neighboring surface voxels of equal or lower height (if column heights are nonuniform).
 
+
+### using `run.sh`
+We have a launcher bash script under development, to coordinate all system components automatically and improve usability.
+
+CHANGELOG:
+
+2025/03/17:
+- all paths are hard-coded
+- no commend line arguments for the wrapper; system components currently have hard-coded args
+
 ## Contributing
 
 Any individual or organisation (a 3rd party outside of the AI) who uses APSIM must be licensed do so by the AI. On download of APSIM, the terms and conditions of a General Use Licence are agreed to and binds the user.
