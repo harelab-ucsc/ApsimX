@@ -68,3 +68,4 @@ ApsimX.xml
 Tests/Simulation/ZMQ-Sync/data/*
 # Ignore data from quail testing.
 Tools/quail/data/*
+tmp/*
