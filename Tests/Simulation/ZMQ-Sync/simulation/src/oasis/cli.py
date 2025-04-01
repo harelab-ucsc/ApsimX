@@ -35,14 +35,14 @@ def client(args):
 
     # Plot simulation.
     # TODO(nubby): Integrate irrigation with colors.
-    # plot_oasis(apsim)
+    #plot_oasis(apsim)
     #if not args.quiet:
     #    plot_vwc_layer(ts_arr, vwc_arr)
     #    plot_vwc_field_grid(ts_arr, vwc_arr)
     
     # nubby's code 
-    #plot_vwc_layer(ts_arr, vwc_arr)
-    #plot_vwc_field_grid(ts_arr, vwc_arr)
+    plot_vwc_layer(ts_arr, vwc_arr)
+    plot_vwc_field_grid(ts_arr, vwc_arr)
     #plot_heatmap(args.anim, ts_arr, vwc_arr)
 
 
