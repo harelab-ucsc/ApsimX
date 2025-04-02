@@ -1,5 +1,5 @@
 """
-@file   quail.py
+@file   Sim2RealComparison.py
 
 Analysis script comparing volumetric water content (VWC) from OASIS sim and
 in-ground sensors.
@@ -29,6 +29,8 @@ DEFAULT_TOLERANCE = 0.0001      # Tolerance in coordinates for locations.
 
 DEFAULT_MM_TO_LAYER = 200       # Encoding of depth until we can encode TIFF
                                 # files with depth data in Apsim.
+
+VERBOSE = False                 # Verbose-mode default to False.
 
 """Datum
 Storage for either sim or sensor datum.
@@ -91,16 +93,17 @@ class Farm(object):
         # TODO(nubby)
         return False
         
-    def add_sensor(self, sensor: Sensor):
+    def add_sensor(self, sensor: Sensor, verbose: bool = False):
         """add_sensor(sensor)
         Add sensor to Farm and adjust boundaries if needed.
 
         @param  sensor  (Sensor)
+        @param  verbose (bool)      Verbose mode?
         """
         self.Sensors.append(sensor)
         if (not self.check_in_farm(sensor.coordinates)):
             self._update_boundary(sensor.coordinates)
-        print("うまい")
+        print("うまい") if verbose else print("DONE.")
 
 
 """_ingest_sensor_data_single_dict(data_json) -> Sensor, crs
@@ -132,18 +135,23 @@ def _ingest_sensor_data_single_dict(data_json: dict) -> Sensor:
         name=name
     ), crs
 
-"""_ingest_sensor_data_geojson(data_paths) -> data
+"""_ingest_sensor_data_geojson(data_paths, IRLFarm, verbose=False) -> data
 
 @param  data_paths  (list[str]) 
 @param  IRLFarm     (Farm)
+@param  verbose     (bool)      Verbose mode?
 """
-def _ingest_sensor_data_geojson(data_paths: list[str], IRLFarm: Farm):
+def _ingest_sensor_data_geojson(
+        data_paths: list[str],
+        IRLFarm: Farm,
+        verbose: bool = False
+    ):
     for file in data_paths:
         print(f"Ingesting sensor data from {file}...")
         with open(file, "r+") as fp:
             raw_data = geojson.load(fp)
             sensor, crs = _ingest_sensor_data_single_dict(raw_data)
-            IRLFarm.add_sensor(sensor)
+            IRLFarm.add_sensor(sensor, verbose)
     return crs
 
 """_ingest_sensor_data_csv(data_path) -> data
@@ -168,14 +176,15 @@ def _ingest_sensor_data_csv(data_path: str, IRLFarm: Farm):
     
     return None
 
-"""_get_sensor_data( data_path, data_files) -> crs 
+"""_get_sensor_data( data_path, data_files, verbose=False) -> crs 
 
 @return crs (str)   Coordinate reference system used.
 """
 def _get_sensor_data(
         data_path: str,
         data_files: list[str],
-        IRLFarm: Farm
+        IRLFarm: Farm,
+        verbose: bool = False
     ) -> str:
     # Read .geojson-formatted sensor data if pre-processed, otherwise read
     # .csv-formatted sensor data.
@@ -186,7 +195,7 @@ def _get_sensor_data(
                 file
             ) for file in data_files if "geojson" in file
         ]
-        crs = _ingest_sensor_data_geojson(sensor_data_paths, IRLFarm)
+        crs = _ingest_sensor_data_geojson(sensor_data_paths, IRLFarm, verbose)
     elif any("csv" in file for file in data_files):
         sensor_data_path = [os.path.join(
             data_path,
@@ -308,7 +317,7 @@ def _ingest_sim_data_npy(data_path: str, crs: dict = None):
     # TODO(nubby)
     return None
 
-"""_get_sim_data(data_path, data_files, crs, SimFarm)
+"""_get_sim_data(data_path, data_files, SimFarm, crs=None, verbose=False)
 Digest real sensor coordinates to generate simulated sensors.
 
 @param  data_path   (str)
@@ -317,13 +326,15 @@ Digest real sensor coordinates to generate simulated sensors.
 @param  SimFarm     (Farm)
 @param  crs         (dict)                  [optional] Use native crs if none
                                             given.
+@param  verbose     (bool)                  Verbose mode?
 """
 def _get_sim_data(
         data_path: str,
         data_files: list[str],
         sensors: list[Sensor],
         SimFarm: Farm,
-        crs: dict = None
+        crs: dict = None,
+        verbose: bool = False
     ) -> list[Sensor]:
     # Read .tiff-formatted sim data if pre-processed, otherwise read .npy data.
     if any("tiff" in file for file in data_files):
@@ -434,9 +445,9 @@ def plot_irl_vs_sim_vwc_delta(irl_sensor: Sensor, sim_sensor: Sensor):
     plt.show()
 
 
-"""compare_sim2real()
+"""compare_sim2real(IRLFarm, SimFarm, verbose=False)
 """
-def compare_sim2real(IRLFarm: Farm, SimFarm: Farm):
+def compare_sim2real(IRLFarm: Farm, SimFarm: Farm, verbose: bool = False):
     for irl_sensor, sim_sensor in zip(IRLFarm.Sensors, SimFarm.Sensors):
         # TODO(nubby): Bug with misaligned sim data frames makes some return 0.
         if len(sim_sensor.data) > 0:
@@ -444,11 +455,16 @@ def compare_sim2real(IRLFarm: Farm, SimFarm: Farm):
             avg_sensor = _get_avg_sensor(sensor=irl_sensor, hours=24)
             plot_irl_vs_sim_vwc_raw(avg_sensor, sim_sensor)
             plot_irl_vs_sim_vwc_delta(avg_sensor, sim_sensor)
+    print("𓅪") if verbose else print("DONE.")
 
-"""ingest(data_path) -> data
+"""ingest(data_path, verbose=False) -> data
 Extract data from provided directory or return an empty array.
+
+@param  data_path           (str)       Path to directory containing data.
+@param  verbose             (bool)      Verbose mode?
+@return [IRLFarm, SimFarm]  tuple(Farm) Farm objects
 """
-def ingest(data_path: str) -> tuple[Farm, Farm]:
+def ingest(data_path: str, verbose: bool = False) -> tuple[Farm, Farm]:
     IRLFarm = Farm()
     SimFarm = Farm()
     data_files = os.listdir(path=data_path)
@@ -456,30 +472,33 @@ def ingest(data_path: str) -> tuple[Farm, Farm]:
     crs = _get_sensor_data(
         data_path=data_path,
         data_files=data_files,
-        IRLFarm=IRLFarm
+        IRLFarm=IRLFarm,
+        verbose=verbose
     )
     _get_sim_data(
         data_path=data_path,
         data_files=data_files,
         sensors=IRLFarm.Sensors,
         SimFarm=SimFarm,
-        crs=crs
+        crs=crs,
+        verbose=verbose
     )
+
     return [IRLFarm, SimFarm]
 
 
-"""quail(data_path)
+"""sim2real_comp(data_path, verbose)
 Generate plots comparing real and sim data.
 
 @param  data_path   (str)   Path to directory containing data.
+@param  verbose     (bool)  Verbose mode?
 """
-def quail(data_path: str):
+def sim2real_comp(data_path: str, verbose: bool = False):
     # Convert real and sim data into a coherent format.
-    IRLFarm, SimFarm = ingest(data_path)
+    IRLFarm, SimFarm = ingest(data_path, verbose)
     # Plot comparisons for sim and real data.
-    compare_sim2real(SimFarm=SimFarm, IRLFarm=IRLFarm)
-    # Bird.
-    print("𓅪")
+    compare_sim2real(SimFarm=SimFarm, IRLFarm=IRLFarm, verbose=verbose)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -490,5 +509,12 @@ if __name__ == "__main__":
         help="Specify path to directory containing data for comparison.",
         type=str
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        type=bool
+    )
     args = parser.parse_args()
-    quail(args.data_path)
+    sim2real_comp(args.data_path, args.verbose)
