@@ -174,8 +174,8 @@ class Simulation:
         shape_x = 0
         shape_y = 0
         for config in field_configs:
-            shape_x = max(shape_x, int(config["X"]))
-            shape_y = max(shape_y, int(config["Y"]))
+            shape_x = max(shape_x, int(float(config["X"])))
+            shape_y = max(shape_y, int(float(config["Y"])))
 
         # create 2d array of fields
         fields = np.empty((shape_x + 1, shape_y + 1), dtype=FieldNode)

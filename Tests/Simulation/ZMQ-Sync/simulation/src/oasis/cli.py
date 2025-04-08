@@ -60,12 +60,16 @@ def kraww(args):
     # Number of fields in each dimension of spacetime.
     @dataclass
     class GristConfigs:
-        dim_x: int = 16
-        dim_y: int = 16
-        dim_z: int = 1
+        dim_x: int = 8          # Number of nodes in one direction.
+        dim_y: int = 8
+        dim_z: int = 1          # NOTE: Note yet implemented.
+        vwc_min: float = 0.1    # Gallons?
+        vwc_max: float = 2.0    # Gallons?
+        r: float = 0.5          # Acres?
+        spacing: int = 1        # Acres?
 
     configs = GristConfigs()
-    grist = generate_data(configs)
+    grist = generate_data(configs, mode="a")
     generate_csv_from_grist(grist, args.path)
 
 def raster(args):
