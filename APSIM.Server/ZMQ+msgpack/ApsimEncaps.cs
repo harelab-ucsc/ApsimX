@@ -11,13 +11,14 @@ using System.Data;
 using MessagePack;
 using APSIM.ZMQServer.IO;
 using APSIM.Shared.Utilities;
+using Models;
 using Models.Core;
 using Models.Core.ApsimFile;
 using static Models.Core.Overrides;
 using Models.Core.Run;
+using Models.Soils;
 using NetMQ;
 using NetMQ.Sockets;
-using Models;
 
 /// <summary>
 /// Encapsulate an apsim simulation & runner
@@ -107,6 +108,20 @@ namespace APSIM.ZMQServer
                         Zone newField = Apsim.Clone<Zone>(template_field);
                         newField.Name = $"Field{fieldNum}";
                         Dictionary<string, dynamic> fieldConfigs = new Dictionary<string, dynamic>();
+                        Soil soil = newField.FindChild<Soil>();
+                        Physical physical = soil.FindChild<Physical>();
+                        double[] LL15byLayer = physical.LL15;
+                        double[] SATbyLayer = physical.SAT;
+                        /*
+                        LL15 
+                        SAT SATbyLayer = physical.FindChild<SAT>();
+                        */
+                        /** Uncomment the below to see all children contained in a Zone clone.
+                        foreach (var children in newField.Children)
+                        {
+                            Console.WriteLine(children.ToString());
+                        }
+                        */
                         foreach (var arg in next_msg.Skip(1))
                         {
                             // TODO(nubby): Error handling.
@@ -132,9 +147,25 @@ namespace APSIM.ZMQServer
                                 case "Area":
                                     newField.Area = Convert.ToDouble(fieldConfigs[key]);
                                     break;
-                                // TODO(nubby): Actually plug this into the right place.
                                 case "SW":
-                                    newField.SW = Convert.ToDouble(fieldConfigs[key]);
+                                    Water water = soil.FindChild<Water>();
+                                    double[] SW = new double[LL15byLayer.Length];
+                                    for (int i = 0; i < LL15byLayer.Length; i++)
+                                    {
+                                        double layerSW = Convert.ToDouble(fieldConfigs[key]);
+                                        if (layerSW < LL15byLayer[i])
+                                        {
+                                            layerSW = LL15byLayer[i];
+                                        }
+                                        if (layerSW > SATbyLayer[i])
+                                        {
+                                            layerSW = SATbyLayer[i];
+                                        }
+                                        SW[i] = layerSW;
+                                    };
+                                    water.InitialValues = SW;
+                                    // TODO(nubby) Play with ingestion from lists; if not practical, switch to ingesting one value
+                                    // at a time.
                                     break;
                                 case "X":
                                     newField.X = Convert.ToDouble(fieldConfigs[key]);
@@ -142,8 +173,8 @@ namespace APSIM.ZMQServer
                                 case "Y":
                                     newField.Y = Convert.ToDouble(fieldConfigs[key]);
                                     break;
-                                case "Z":
-                                    newField.Z = Convert.ToDouble(fieldConfigs[key]);
+                                case "Altitude":
+                                    newField.Altitude = Convert.ToDouble(fieldConfigs[key]);
                                     break;
                             }
                         }
