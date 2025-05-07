@@ -14,6 +14,7 @@ Kraww!!
 """
 import copy
 import csv
+import json
 import os
 import random
 
@@ -39,34 +40,61 @@ def generate_csv_fields(
         dim_x: int = 16         # Number of nodes in one direction.
         dim_y: int = 16
         dim_z: int = 1          # Altitude.
+        layers: int = 10        # Layers per node.
         vwc_min: float = 0.1    # Gallons?
         vwc_max: float = 2.0    # Gallons?
         r: float = 0.5          # Acres?
         spacing: int = 1        # Acres?
 
+    # Generate a matrix of Field node configurations based on input data.
     configs = OasisConfigs()
-    grist = generate_data(configs, mode="a")
-    generate_csv_from_grist(grist, path_output)
+    farm_dict = generate_data(configs, mode="a")
 
-""" generate_csv_from_grist(grist, fpath)
+    # Write Farm configs to an output file.
+    # TODO(nubby): Deprecate CSV.
+    output_type = path_output.split(".")[-1]
+    if output_type == "csv":
+        generate_csv_configs(farm_dict, path_output, verbose)
+    elif output_type == "json":
+        generate_json_configs(farm_dict, path_output, verbose)
 
-Write the details of a flight plan to a CSV file.
+""" generate_json_configs(farm_dict, path_output)
 
-@param  grist   A list of configurations that define characteristics of each
-                generated Field.
-@param  fpath   Path to output CSV file.
+Write the details of a flight plan to a JSON file.
+
+@param  farm_dict       A list of configurations that define characteristics of
+                            each generated Field.
+@param  path_output     Path to output JSON file.
 """
-def generate_csv_from_grist(
-        grist: list[dict],
-        fpath: str,
+def generate_json_configs(
+        farm_dict: list[dict],
+        path_output: str,
         verbose: bool = False
         ):
     print("Milling grist...") if verbose else print("Generating configs...")
-    with open(fpath, "w", newline="") as csvp:
-        writer = csv.DictWriter(csvp, fieldnames=grist[0].keys())
+    with open(path_output, "w") as po:
+        json.dump(farm_dict, po, indent=4)
+    print(f"Grist millt upon {path_output}.") if verbose else print("DONE.")
+
+""" generate_csv_configs(farm_dict, fpath)
+
+Write the details of a flight plan to a CSV file.
+
+@param  farm_dict       A list of configurations that define characteristics of
+                            each generated Field.
+@param  path_output     Path to output CSV file.
+"""
+def generate_csv_configs(
+        farm_dict: list[dict],
+        path_output: str,
+        verbose: bool = False
+        ):
+    print("Milling grist...") if verbose else print("Generating configs...")
+    with open(path_output, "w", newline="") as csvp:
+        writer = csv.DictWriter(csvp, fieldnames=farm_dict[0].keys())
         writer.writeheader()
-        [writer.writerow(datum) for datum in grist]
-    print(f"Grist millt upon {fpath}.") if verbose else print("DONE.")
+        [writer.writerow(datum) for datum in farm_dict]
+    print(f"Grist millt upon {path_output}.") if verbose else print("DONE.")
 
 
 """ generate_data(configs, mode)
