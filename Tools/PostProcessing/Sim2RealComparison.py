@@ -229,15 +229,18 @@ def _ingest_sim_data_single_sensor(
     for index in data_rio.indexes:
         try:
             band = data_rio.read(index)
+            # TODO: Is this the proper way to index?
             data.append(Datum(
                 timestamp=ts,
-                VWC=band[coordinates[0], coordinates[1]]
+                VWC=band[coordinates[0]-1, coordinates[1]-1]
             ))
         except IndexError:
             # Some raster frames are deficient, but not a problem so long as
             # we keep track of time.
-            #print(str(data_rio.height),str(data_rio.width), str(coordinates)," failed")
-            pass
+            print(
+                    "Height: "+str(data_rio.height),
+                    "Width: "+str(data_rio.width),
+                    "COORDS: "+str(coordinates)," failed")
         finally:
             # Always advance a day, even when a sample is missing.
             ts = ts + td_24hrs

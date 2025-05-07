@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Kraww!!"""
+"""
+@file   config.py
+
+Configuration for OASIS simulation using Apsim.
+Kraww!!
+
+@author jLab
+
+@date   7 Apr 2025
+"""
 
 import copy
 import csv
@@ -17,26 +26,55 @@ def generate_csv_from_grist(grist: list[dict], fpath: str):
     print(f"Grist millt upon {fpath}.")
 
 
-def generate_data(configs: dict) -> list[dict]:
-    """Grist for The Mill."""
-    data = []
-    datum = {"Name": "", "Radius": "", "SW": "", "X": "", "Y": "", "Z": ""}
+def generate_data(
+        configs: dict,
+        mode: str = "n"
+        ) -> list[dict]:
+    """generate_data(configs, mode)
+    Grist for The Mill.
+    Generate a set of configurations for each Field node.
 
-    r_default = 0.5  # Acres?
-    spacing_default = 1
-    vol_h2o_min = 0.1
-    vol_h2o_max = 2.0
+    @param  configs     (dict)          Base configurations for entire
+                                        simulation.
+    @param  mode        (str)           Mapping of initial VWC for each node:
+                                            "n" = "naive"
+                                            "a" = "average"
+                                            "l" = "minimum"
+                                            "u" = "maximum"
+    @return sim_setup   (list[dict])    Configurations for each Field node.
+    """
+    data = []
+    field_config = {
+            "Name": "",
+            "Radius": "",
+            "SW": "",
+            "X": "",
+            "Y": "",
+            "Z": ""
+            }
+
     index = 0
     for i in range(0, configs.dim_x):
         for j in range(0, configs.dim_y):
             for k in range(0, configs.dim_z):
-                fresh_datum = copy.deepcopy(datum)
-                fresh_datum["Name"] = f"Field{index}"
-                fresh_datum["Radius"] = str(r_default)
-                fresh_datum["SW"] = str(random.uniform(vol_h2o_min, vol_h2o_max))
-                fresh_datum["X"] = str(spacing_default * i)
-                fresh_datum["Y"] = str(spacing_default * j)
-                fresh_datum["Z"] = str(spacing_default * k)
-                data.append(fresh_datum)
+                fresh_field_config = copy.deepcopy(field_config)
+                fresh_field_config["Name"] = f"Field{index}"
+                fresh_field_config["Radius"] = str(configs.r)
+                if mode == "a":
+                    fresh_field_config["SW"] = str(
+                            (configs.vwc_max - configs.vwc_min) / 2
+                            )
+                elif mode == "l":
+                    fresh_field_config["SW"] = str(configs.vwc_min)
+                elif mode == "u":
+                    fresh_field_config["SW"] = str(configs.vwc_max)
+                else:
+                    fresh_field_config["SW"] = str(
+                            random.uniform(configs.vwc_min, configs.vwc_max)
+                            )
+                fresh_field_config["X"] = str(configs.spacing * i)
+                fresh_field_config["Y"] = str(configs.spacing * j)
+                fresh_field_config["Z"] = str(configs.spacing * k)
+                data.append(fresh_field_config)
                 index += 1
     return data
