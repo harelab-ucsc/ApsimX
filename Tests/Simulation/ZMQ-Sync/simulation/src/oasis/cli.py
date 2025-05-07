@@ -62,11 +62,9 @@ See argparser set_defaults()
 @todo   Rebuild to use input args.
 """
 def configure(args):
-    #path_input = args.input if args.input else ""
-    path_input = ""
+    path_input = args.input if args.input else ""
     path_output = args.output
-    #verbose = args.verbose
-    verbose = False
+    verbose = args.verbose
     generate_csv_fields(
             path_input=path_input,
             path_output=path_output,
