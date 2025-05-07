@@ -41,8 +41,8 @@ def client(args):
     #    plot_vwc_field_grid(ts_arr, vwc_arr)
     
     # nubby's code 
-    plot_vwc_layer(ts_arr, vwc_arr)
-    plot_vwc_field_grid(ts_arr, vwc_arr)
+    #plot_vwc_layer(ts_arr, vwc_arr)
+    #plot_vwc_field_grid(ts_arr, vwc_arr)
     #plot_heatmap(args.anim, ts_arr, vwc_arr)
 
 
@@ -60,9 +60,9 @@ def kraww(args):
     # Number of fields in each dimension of spacetime.
     @dataclass
     class GristConfigs:
-        dim_x: int = 8          # Number of nodes in one direction.
-        dim_y: int = 8
-        dim_z: int = 1          # NOTE: Note yet implemented.
+        dim_x: int = 16         # Number of nodes in one direction.
+        dim_y: int = 16
+        dim_z: int = 1          # Altitude.
         vwc_min: float = 0.1    # Gallons?
         vwc_max: float = 2.0    # Gallons?
         r: float = 0.5          # Acres?
