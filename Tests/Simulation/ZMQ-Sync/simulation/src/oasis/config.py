@@ -16,33 +16,44 @@ import csv
 import random
 
 
-def generate_csv_from_grist(grist: list[dict], fpath: str):
-    """Write the details of a flight plan to a CSV file."""
-    print("Milling grist...")
+""" generate_csv_from_grist(grist, fpath)
+
+Write the details of a flight plan to a CSV file.
+
+@param  grist   A list of configurations that define characteristics of each
+                generated Field.
+@param  fpath   Path to output CSV file.
+"""
+def generate_csv_from_grist(
+        grist: list[dict],
+        fpath: str,
+        verbose: bool = False
+        ):
+    verbose ? print("Milling grist...") : print("Generating configs...")
     with open(fpath, "w", newline="") as csvp:
         writer = csv.DictWriter(csvp, fieldnames=grist[0].keys())
         writer.writeheader()
         [writer.writerow(datum) for datum in grist]
-    print(f"Grist millt upon {fpath}.")
+    verbose ? print(f"Grist millt upon {fpath}.") : print("DONE.")
 
 
+""" generate_data(configs, mode)
+
+Grist for The Mill.
+Generate a set of configurations for each Field node.
+
+@param  configs     Base configurations for entire simulation.
+@param  mode        Mapping of initial VWC for each node:
+                        "n" = "naive"
+                        "a" = "average"
+                        "l" = "minimum"
+                        "u" = "maximum"
+@return Configurations for each Field node.
+"""
 def generate_data(
         configs: dict,
         mode: str = "n"
         ) -> list[dict]:
-    """generate_data(configs, mode)
-    Grist for The Mill.
-    Generate a set of configurations for each Field node.
-
-    @param  configs     (dict)          Base configurations for entire
-                                        simulation.
-    @param  mode        (str)           Mapping of initial VWC for each node:
-                                            "n" = "naive"
-                                            "a" = "average"
-                                            "l" = "minimum"
-                                            "u" = "maximum"
-    @return sim_setup   (list[dict])    Configurations for each Field node.
-    """
     data = []
     field_config = {
             "Name": "",
@@ -50,7 +61,7 @@ def generate_data(
             "SW": "",
             "X": "",
             "Y": "",
-            "Z": ""
+            "Altitude": ""
             }
 
     index = 0
@@ -74,7 +85,7 @@ def generate_data(
                             )
                 fresh_field_config["X"] = str(configs.spacing * i)
                 fresh_field_config["Y"] = str(configs.spacing * j)
-                fresh_field_config["Z"] = str(configs.spacing * k)
+                fresh_field_config["Altitude"] = str(configs.spacing * k)
                 data.append(fresh_field_config)
                 index += 1
     return data

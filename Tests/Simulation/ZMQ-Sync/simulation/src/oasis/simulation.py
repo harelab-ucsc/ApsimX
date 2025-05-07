@@ -21,7 +21,7 @@ class FieldNode:
     Attributes:
         id (int): Location (index) within Apsim list.
         info (dict): Includes the following keys:
-            { "X", "Y", "Z", "Radius", "WaterVolume", "Name" }
+            { "X", "Y", "Altitude", "Radius", "SW", "Name" }
 
     """
 
@@ -32,16 +32,16 @@ class FieldNode:
                 [example_url.com] for supported configurations.
 
         TODO:
-            * Replace XYZ with GPS data and elevation/depth?
+            * Replace XY with GPS data?
         """
         self.id = None
         self.info = {}
-        for key in ["Name", "SW", "X", "Y", "Z"]:
+        for key in ["Name", "SW", "X", "Y", "Altitude"]:
             self.info[key] = configs[key]
         # TODO(nubby): Make the radius/area settings better.
         self.info["Area"] = str((float(configs["Radius"]) * 2) ** 2)
 
-        self.coords = [configs["X"], configs["Y"], configs["Z"]]
+        self.coords = [configs["X"], configs["Y"], configs["Altitude"]]
         self.radius = configs["Radius"]
         self.name = configs["Name"]
         self.v_water = configs["SW"]
@@ -58,7 +58,7 @@ class FieldNode:
             self.info["Area"],
             self.info["X"],
             self.info["Y"],
-            self.info["Z"],
+            self.info["Altitude"],
         )
 
     def digest_configs(self, fpath: str):
@@ -158,7 +158,7 @@ class Simulation:
             "SW": "(float)",
             "X": "(float)",
             "Y": "(float)",
-            "Z": "(float)"
+            "Altitude": "(float)"
             }...]
 
         Args:
@@ -358,7 +358,7 @@ def read_csv_file(fpath: str) -> list[dict]:
             'SW': '1.6726570467430772',
             'X': '0.0',
             'Y': '0.0',
-            'Z': '0.0'
+            'Altitude': '0.0'
         }
     """
     data = []

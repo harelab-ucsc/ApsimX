@@ -46,20 +46,26 @@ def client(args):
     #plot_heatmap(args.anim, ts_arr, vwc_arr)
 
 
-def kraww(args):
-    """Procedurally generate a CSV file of APSIM Field configs.
+""" configure(args)
 
-    See argparser set_defaults() (https://docs.python.org/3/library/argparse.html#sub-commands)
-    """
+Procedurally generate a CSV file of APSIM Field configs.
+
+See argparser set_defaults() (https://docs.python.org/3/library/argparse.html#sub-commands)
+
+TODO(nubby) 5/7/2025
+@param  args
+"""
+def configure(args):
 
     # create path if doesn't already exist
-    dir_path = os.path.dirname(args.path)
-    if dir_path and not os.path.exists(args.path):
-        os.makedirs(os.path.dirname(args.path), exist_ok=True)
+    dir_path = os.path.dirname(args.output)
+    if dir_path and not os.path.exists(args.output):
+        os.makedirs(os.path.dirname(args.output), exist_ok=True)
 
     # Number of fields in each dimension of spacetime.
+    # TODO(nubby): Reformat to map initial sensor data to this.
     @dataclass
-    class GristConfigs:
+    class OasisConfigs:
         dim_x: int = 16         # Number of nodes in one direction.
         dim_y: int = 16
         dim_z: int = 1          # Altitude.
@@ -68,9 +74,9 @@ def kraww(args):
         r: float = 0.5          # Acres?
         spacing: int = 1        # Acres?
 
-    configs = GristConfigs()
+    configs = OasisConfigs()
     grist = generate_data(configs, mode="a")
-    generate_csv_from_grist(grist, args.path)
+    generate_csv_from_grist(grist, args.output)
 
 def raster(args):
     """Generate tiff files vwc numpy array
@@ -120,8 +126,8 @@ def entry():
     client_parser.set_defaults(func=client)
 
     config_parser = subparsers.add_parser("config", help="Generates field config csv")
-    config_parser.add_argument("path", type=str, help="Path to save csv")
-    config_parser.set_defaults(func=kraww)
+    config_parser.add_argument("output", type=str, help="Path to save csv")
+    config_parser.set_defaults(func=configure)
     
     metompkin_parser = subparsers.add_parser("metompkin", help="Convert metompkin dataset")
     metompkin_parser.add_argument("path", type=str, help="Path to metopkin data")
