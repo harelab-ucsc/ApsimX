@@ -10,7 +10,7 @@ import os
 from .apsim import ApsimController
 from .simulation import Simulation
 from .plots import plot_vwc_layer, plot_vwc_field_grid, plot_heatmap
-from .config import generate_csv_from_grist, generate_data
+from .config import generate_csv_fields
 from .raster import Rasterize
 from .metompkin import MetompkinConverter
 
@@ -18,7 +18,8 @@ from .metompkin import MetompkinConverter
 def client(args):
     """Starts oasis client
 
-    See argparser set_defaults() (https://docs.python.org/3/library/argparse.html#sub-commands)
+    See argparser set_defaults()
+        (https://docs.python.org/3/library/argparse.html#sub-commands).
     """
 
     # initialize connection
@@ -50,33 +51,27 @@ def client(args):
 
 Procedurally generate a CSV file of APSIM Field configs.
 
-See argparser set_defaults() (https://docs.python.org/3/library/argparse.html#sub-commands)
+See argparser set_defaults()
+    (https://docs.python.org/3/library/argparse.html#sub-commands).
 
-TODO(nubby) 5/7/2025
-@param  args
+@param  args    Contains the members:
+                    + input     The path to input .geojson sensor data.
+                    + output    The path to an output .csv file defining
+                                parameters for each Field node.
+                    + verbose   Add verbose output.
+@todo   Rebuild to use input args.
 """
 def configure(args):
-
-    # create path if doesn't already exist
-    dir_path = os.path.dirname(args.output)
-    if dir_path and not os.path.exists(args.output):
-        os.makedirs(os.path.dirname(args.output), exist_ok=True)
-
-    # Number of fields in each dimension of spacetime.
-    # TODO(nubby): Reformat to map initial sensor data to this.
-    @dataclass
-    class OasisConfigs:
-        dim_x: int = 16         # Number of nodes in one direction.
-        dim_y: int = 16
-        dim_z: int = 1          # Altitude.
-        vwc_min: float = 0.1    # Gallons?
-        vwc_max: float = 2.0    # Gallons?
-        r: float = 0.5          # Acres?
-        spacing: int = 1        # Acres?
-
-    configs = OasisConfigs()
-    grist = generate_data(configs, mode="a")
-    generate_csv_from_grist(grist, args.output)
+    #path_input = args.input if args.input else ""
+    path_input = ""
+    path_output = args.output
+    #verbose = args.verbose
+    verbose = False
+    generate_csv_fields(
+            path_input=path_input,
+            path_output=path_output,
+            verbose=verbose
+            )
 
 def raster(args):
     """Generate tiff files vwc numpy array
@@ -125,8 +120,24 @@ def entry():
     #client_parser.add_argument("anim", type=str, help="Path to save heatmap animation")
     client_parser.set_defaults(func=client)
 
-    config_parser = subparsers.add_parser("config", help="Generates field config csv")
-    config_parser.add_argument("output", type=str, help="Path to save csv")
+    config_parser = subparsers.add_parser("config", help="Generates field config .csv.")
+    config_parser.add_argument("output", type=str, help="Path to save .csv file.")
+    config_parser.add_argument(
+            "-i",
+            "--input",
+            type=str,
+            action=argparse.BooleanOptionalAction,
+            default="",
+            help="Path to input .geojson files."
+            )
+    config_parser.add_argument(
+            "-v",
+            "--verbose",
+            type=bool,
+            action=argparse.BooleanOptionalAction,
+            default=False,
+            help="Print verbose output?"
+            )
     config_parser.set_defaults(func=configure)
     
     metompkin_parser = subparsers.add_parser("metompkin", help="Convert metompkin dataset")

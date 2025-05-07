@@ -6,15 +6,47 @@
 Configuration for OASIS simulation using Apsim.
 Kraww!!
 
-@author jLab
+@author     jLab
+@author     HARE Lab
 
-@date   7 Apr 2025
+@date       7 Apr 2025
+@version    1.0.1
 """
-
 import copy
 import csv
+import os
 import random
 
+from dataclasses import dataclass
+
+
+""" generate_csv_fields(input, output, verbose)
+"""
+def generate_csv_fields(
+        path_input: str,
+        path_output: str,
+        verbose: bool = False
+        ):
+    # Create path if doesn't already exist.
+    dir_path = os.path.dirname(path_output)
+    if dir_path and not os.path.exists(path_output):
+        os.makedirs(os.path.dirname(path_output), exist_ok=True)
+
+    # Number of fields in each dimension of spacetime.
+    # TODO(nubby): Reformat to map initial sensor data to this.
+    @dataclass
+    class OasisConfigs:
+        dim_x: int = 16         # Number of nodes in one direction.
+        dim_y: int = 16
+        dim_z: int = 1          # Altitude.
+        vwc_min: float = 0.1    # Gallons?
+        vwc_max: float = 2.0    # Gallons?
+        r: float = 0.5          # Acres?
+        spacing: int = 1        # Acres?
+
+    configs = OasisConfigs()
+    grist = generate_data(configs, mode="a")
+    generate_csv_from_grist(grist, path_output)
 
 """ generate_csv_from_grist(grist, fpath)
 
@@ -29,12 +61,12 @@ def generate_csv_from_grist(
         fpath: str,
         verbose: bool = False
         ):
-    verbose ? print("Milling grist...") : print("Generating configs...")
+    print("Milling grist...") if verbose else print("Generating configs...")
     with open(fpath, "w", newline="") as csvp:
         writer = csv.DictWriter(csvp, fieldnames=grist[0].keys())
         writer.writeheader()
         [writer.writerow(datum) for datum in grist]
-    verbose ? print(f"Grist millt upon {fpath}.") : print("DONE.")
+    print(f"Grist millt upon {fpath}.") if verbose else print("DONE.")
 
 
 """ generate_data(configs, mode)
@@ -89,3 +121,6 @@ def generate_data(
                 data.append(fresh_field_config)
                 index += 1
     return data
+
+if __name__ == "__main__":
+    pass
