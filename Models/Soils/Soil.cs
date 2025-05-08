@@ -284,6 +284,7 @@ namespace Models.Soils
                         else if (MathUtilities.GreaterThan(water.InitialValues[layer], physical.SAT[layer], 3))
                             message.AppendLine($"Soil water of {water.InitialValues[layer].ToString("f3")} in layer {layerNumber} is above saturation of {physical.SAT[layer].ToString("f3")}");
                         else if (MathUtilities.LessThan(water.InitialValues[layer], physical.AirDry[layer], 3))
+                            
                             message.AppendLine($"Soil water of {water.InitialValues[layer].ToString("f3")} in layer {layerNumber} is below air-dry value of {physical.AirDry[layer].ToString("f3")}");
                     }
 

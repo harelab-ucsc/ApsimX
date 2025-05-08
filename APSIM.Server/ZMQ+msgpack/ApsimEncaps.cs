@@ -84,7 +84,12 @@ namespace APSIM.ZMQServer
             // Awaits the command "energize" to start the simulation.
             string command = next_msg[0].ConvertToString();
             int fieldNum = 0;
-            while (command != "energize")
+
+            // Setup until the "energize" command is received.
+            // TODO: Add a setup timeout.
+            //int READY = 0;
+            //while (READY == 0)
+            while(command != "energize")
             {
                 switch (command)
                 {
@@ -103,7 +108,6 @@ namespace APSIM.ZMQServer
                         }
                         break;
                     case "field":
-                        // TODO(nubby):
                         //  3. translate K-V pairs into Field params.
                         Zone newField = Apsim.Clone<Zone>(template_field);
                         newField.Name = $"Field{fieldNum}";
@@ -112,16 +116,6 @@ namespace APSIM.ZMQServer
                         Physical physical = soil.FindChild<Physical>();
                         double[] LL15byLayer = physical.LL15;
                         double[] SATbyLayer = physical.SAT;
-                        /*
-                        LL15 
-                        SAT SATbyLayer = physical.FindChild<SAT>();
-                        */
-                        /** Uncomment the below to see all children contained in a Zone clone.
-                        foreach (var children in newField.Children)
-                        {
-                            Console.WriteLine(children.ToString());
-                        }
-                        */
                         foreach (var arg in next_msg.Skip(1))
                         {
                             // TODO(nubby): Error handling.
@@ -139,6 +133,7 @@ namespace APSIM.ZMQServer
                         };
                         foreach (string key in fieldConfigs.Keys)
                         {
+                            Console.WriteLine($"KEY: {key}: {fieldConfigs[key]}");
                             switch (key)
                             {
                                 case "Name":
@@ -149,7 +144,7 @@ namespace APSIM.ZMQServer
                                     break;
                                 case "SW":
                                     Water water = soil.FindChild<Water>();
-                                    double[] SW = new double[LL15byLayer.Length];
+                                    //double[] SW = new double[LL15byLayer.Length];
                                     for (int i = 0; i < LL15byLayer.Length; i++)
                                     {
                                         double layerSW = Convert.ToDouble(fieldConfigs[key]);
@@ -161,9 +156,11 @@ namespace APSIM.ZMQServer
                                         {
                                             layerSW = SATbyLayer[i];
                                         }
-                                        SW[i] = layerSW;
+                                        //SW[i] = layerSW;
+                                        water.InitialValues[i] = layerSW;
                                     };
-                                    water.InitialValues = SW;
+
+                                    //water.InitialValues = SW;
                                     // TODO(nubby) Play with ingestion from lists; if not practical, switch to ingesting one value
                                     // at a time.
                                     break;
@@ -180,6 +177,7 @@ namespace APSIM.ZMQServer
                         }
                         // add to simulation tree
                         sim_root.Children.Add(newField);
+
                         // register irrigator with synchroniser
                         Irrigation irrigationNew = newField.FindChild<Irrigation>();
                         synchroniser.IrrigationList.Add(irrigationNew);
@@ -194,8 +192,13 @@ namespace APSIM.ZMQServer
                         fieldNum++;
                         break;
                     case "energize":
+                        // Remove the template Field node from the simulation.
+                        sim_root.Children.Remove(template_field);
+
                         Console.WriteLine("Setup complete; beginning simulation...");
                         connection.SendFrame("ready");
+                        // Signal that we are ready to run.
+                        //READY = 1;
                         break;
                     default:
                         Console.WriteLine("Unknown setup command {0}", command);
@@ -209,7 +212,7 @@ namespace APSIM.ZMQServer
             connection.Close();
 
             // disable template field
-            template_field.Enabled = false;
+            //template_field.Enabled = false;
 
             // configure runners
             runner = new Runner(sims, numberOfProcessors: (int)options.WorkerCpuCount);
