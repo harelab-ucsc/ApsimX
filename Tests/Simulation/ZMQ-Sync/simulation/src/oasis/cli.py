@@ -1,5 +1,15 @@
 #!/usr/bin/env python
+"""
+@file       cli.py
 
+Command-line interface for OASIS simulator.
+
+@author     jLab
+@author     HARE Lab
+
+@date       7 May 2025
+@version    1.0.1
+"""
 import argparse
 from dataclasses import dataclass
 from datetime import datetime
@@ -10,7 +20,7 @@ import os
 from .apsim import ApsimController
 from .simulation import Simulation
 from .plots import plot_vwc_layer, plot_vwc_field_grid, plot_heatmap
-from .config import generate_csv_fields
+from .config import generate_farm_configs
 from .raster import Rasterize
 from .metompkin import MetompkinConverter
 
@@ -65,7 +75,7 @@ def configure(args):
     path_input = args.input if args.input else ""
     path_output = args.output
     verbose = args.verbose
-    generate_csv_fields(
+    generate_farm_configs(
             path_input=path_input,
             path_output=path_output,
             verbose=verbose
@@ -74,7 +84,8 @@ def configure(args):
 def raster(args):
     """Generate tiff files vwc numpy array
 
-    See argparser set_defaults() (https://docs.python.org/3/library/argparse.html#sub-commands)
+    See argparser set_defaults()
+        (https://docs.python.org/3/library/argparse.html#sub-commands).
     """
 
     raster_arry = np.load(args.input)
@@ -90,16 +101,15 @@ def raster(args):
 def metompkin(args):
     """Create a geojson files for Metompkin farm dataset
     
-    See argparser set_defaults() (https://docs.python.org/3/library/argparse.html#sub-commands)
+    See argparser set_defaults()
+        (https://docs.python.org/3/library/argparse.html#sub-commands).
     """
-
     converter = MetompkinConverter()
     converter.convert(args.path, args.json)
 
 def entry():
     """Entry point for oasis"""
-
-    # cli interface
+    # CLI interface.
     parser = argparse.ArgumentParser(description="OASIS Apsim Python client")
 
     subparsers = parser.add_subparsers(help="Subcommand", required=True)

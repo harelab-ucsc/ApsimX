@@ -21,9 +21,10 @@ import random
 from dataclasses import dataclass
 
 
-""" generate_csv_fields(input, output, verbose)
+""" generate_farm_configs(input, output, verbose)
+
 """
-def generate_csv_fields(
+def generate_farm_configs(
         path_input: str,
         path_output: str,
         verbose: bool = False
@@ -112,7 +113,7 @@ Generate a set of configurations for each Field node.
 """
 def generate_data(
         configs: dict,
-        mode: str = "n"
+        mode: str = "a"
         ) -> list[dict]:
     data = []
     field_config = {
@@ -132,9 +133,13 @@ def generate_data(
                 fresh_field_config["Name"] = f"Field{index}"
                 fresh_field_config["Radius"] = str(configs.r)
                 if mode == "a":
+                    """
                     fresh_field_config["SW"] = str(
                             (configs.vwc_max - configs.vwc_min) / 2
                             )
+                    """
+                    fresh_field_config["SW"] = str(0.160657)    # Avg init VWC.
+
                 elif mode == "l":
                     fresh_field_config["SW"] = str(configs.vwc_min)
                 elif mode == "u":
@@ -148,6 +153,7 @@ def generate_data(
                 fresh_field_config["Altitude"] = str(configs.spacing * k)
                 data.append(fresh_field_config)
                 index += 1
+        print(str(data))
     return data
 
 if __name__ == "__main__":
