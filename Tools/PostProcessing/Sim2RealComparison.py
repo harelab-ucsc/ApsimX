@@ -25,7 +25,9 @@ from matplotlib import pyplot as plt
 
 
 DEFAULT_DATA_DIR = "./data/"
+DEFAULT_OUTPUT_DIR = "./out/"
 DEFAULT_TOLERANCE = 0.0001      # Tolerance in coordinates for locations.
+DEFAULT_LABEL = "simpleMean"
 
 DEFAULT_MM_TO_LAYER = 200       # Encoding of depth until we can encode TIFF
                                 # files with depth data in Apsim.
@@ -337,6 +339,7 @@ def _get_sim_data(
         sensors: list[Sensor],
         SimFarm: Farm,
         crs: dict = None,
+        save: bool = True,
         verbose: bool = False
     ) -> list[Sensor]:
     # Read .tiff-formatted sim data if pre-processed, otherwise read .npy data.
@@ -407,9 +410,13 @@ def _get_avg_sensor(sensor: Sensor, hours: float = 24) -> Sensor:
         name=sensor.name
     )
 
-"""plot_irl_vs_sim_vwc_raw(irl_sensor, sim_sensor)
+"""plot_irl_vs_sim_vwc_raw(irl_sensor, sim_sensor, path_output)
 """
-def plot_irl_vs_sim_vwc_raw(irl_sensor: Sensor, sim_sensor: Sensor):
+def plot_irl_vs_sim_vwc_raw(
+        irl_sensor: Sensor,
+        sim_sensor: Sensor,
+        path_output: str
+        ):
     x_irl = [datum.timestamp for datum in irl_sensor.data]
     vwc_irl = [float(datum.VWC) for datum in irl_sensor.data]
     x_sim = [datum.timestamp for datum in sim_sensor.data]
@@ -424,12 +431,58 @@ def plot_irl_vs_sim_vwc_raw(irl_sensor: Sensor, sim_sensor: Sensor):
     ax.set_ylabel("VWC")
     ax.legend()
 
-    plt.title(f"{irl_sensor.name}: IRL vs in OASIS Sim, raw")
-    plt.show()
+    plt.title(f"{irl_sensor.name}: IRL vs in OASIS Sim, " +
+              f"[{DEFAULT_LABEL}]")
+
+    ts = datetime.today().strftime("%Y%m%d")
+    plt.savefig(f"{path_output}/{ts}-{irl_sensor.name}.png")
+    #plt.show()
+    plt.close()
+
+"""plot_irl_vs_sim_vwc_deriv(irl_sensor, sim_sensor, path_output)
+
+Plot the derivatives of sim and real sensors.
+"""
+def plot_irl_vs_sim_vwc_deriv(
+        irl_sensor: Sensor,
+        sim_sensor: Sensor,
+        path_output: str
+        ):
+    x_irl = [datum.timestamp for datum in irl_sensor.data]
+    vwc_irl = [float(datum.VWC) for datum in irl_sensor.data]
+    x_sim = [datum.timestamp for datum in sim_sensor.data]
+    vwc_sim = [float(datum.VWC) for datum in sim_sensor.data]
+
+    epoch = datetime.utcfromtimestamp(0)
+    t_irl = [(t - epoch).total_seconds() for t in x_irl]
+    t_sim = [(t - epoch).total_seconds() for t in x_sim]
+    dirl_dx = np.gradient(vwc_irl, t_irl)
+    dsim_dx = np.gradient(vwc_sim, t_sim)
+    
+    fig, ax = plt.subplots()
+    line_irl, = ax.plot(x_irl, dirl_dx, c='g')
+    line_sim, = ax.plot(x_sim, dsim_dx, c='m')
+    line_irl.set_label("d(Measured VWC) / dt")
+    line_sim.set_label("d(Sim VWC) / dt")
+    ax.set_xlabel("Timestamp")
+    ax.set_ylabel("VWC")
+    ax.legend()
+
+    plt.title(f"{irl_sensor.name}: d(IRL)/dt vs d(Sim)/dt, " +
+              f"[{DEFAULT_LABEL}]")
+
+    ts = datetime.today().strftime("%Y%m%d")
+    plt.savefig(f"{path_output}/{ts}-{irl_sensor.name}-dt.png")
+    #plt.show()
+    plt.close()
 
 """plot_irl_vs_sim_vwc_delta(irl_sensor, sim_sensor)
 """
-def plot_irl_vs_sim_vwc_delta(irl_sensor: Sensor, sim_sensor: Sensor):
+def plot_irl_vs_sim_vwc_delta(
+        irl_sensor: Sensor,
+        sim_sensor: Sensor,
+        path_output: str
+        ):
     assert(len(irl_sensor.data) == len(sim_sensor.data))
 
     x = [datum.timestamp for datum in irl_sensor.data]
@@ -444,20 +497,31 @@ def plot_irl_vs_sim_vwc_delta(irl_sensor: Sensor, sim_sensor: Sensor):
     ax.set_ylabel("VWC, delta")
     ax.legend()
 
-    plt.title(f"{irl_sensor.name}: VWC Delta Between IRL and Sim Sensing")
-    plt.show()
+    plt.title(f"{irl_sensor.name}: VWC Delta Between IRL and Sim Sensing, " +
+              f"[{DEFAULT_LABEL}]")
+
+    ts = datetime.today().strftime("%Y%m%d")
+    plt.savefig(f"{path_output}/{ts}-{irl_sensor.name}-delta.png")
+    #plt.show()
+    plt.close()
 
 
 """compare_sim2real(IRLFarm, SimFarm, verbose=False)
 """
-def compare_sim2real(IRLFarm: Farm, SimFarm: Farm, verbose: bool = False):
+def compare_sim2real(
+        IRLFarm: Farm,
+        SimFarm: Farm,
+        path_output: str = DEFAULT_OUTPUT_DIR,
+        verbose: bool = False
+        ):
     for irl_sensor, sim_sensor in zip(IRLFarm.Sensors, SimFarm.Sensors):
         # TODO(nubby): Bug with misaligned sim data frames makes some return 0.
         if len(sim_sensor.data) > 0:
             # Average IRLFarm sensor data for each day.
             avg_sensor = _get_avg_sensor(sensor=irl_sensor, hours=24)
-            plot_irl_vs_sim_vwc_raw(avg_sensor, sim_sensor)
-            plot_irl_vs_sim_vwc_delta(avg_sensor, sim_sensor)
+            plot_irl_vs_sim_vwc_raw(avg_sensor, sim_sensor, path_output)
+            plot_irl_vs_sim_vwc_delta(avg_sensor, sim_sensor, path_output)
+            plot_irl_vs_sim_vwc_deriv(avg_sensor, sim_sensor, path_output)
     print("𓅪") if verbose else print("DONE.")
 
 """ingest(data_path, verbose=False) -> data
@@ -490,26 +554,38 @@ def ingest(data_path: str, verbose: bool = False) -> tuple[Farm, Farm]:
     return [IRLFarm, SimFarm]
 
 
-"""sim2real_comp(data_path, verbose)
+"""sim2real_comp(path_input, path_output, verbose)
 Generate plots comparing real and sim data.
 
 @param  data_path   (str)   Path to directory containing data.
 @param  verbose     (bool)  Verbose mode?
 """
-def sim2real_comp(data_path: str, verbose: bool = False):
+def sim2real_comp(path_input: str, path_output: str, verbose: bool = False):
     # Convert real and sim data into a coherent format.
-    IRLFarm, SimFarm = ingest(data_path, verbose)
+    IRLFarm, SimFarm = ingest(path_input, verbose)
     # Plot comparisons for sim and real data.
-    compare_sim2real(SimFarm=SimFarm, IRLFarm=IRLFarm, verbose=verbose)
+    compare_sim2real(
+            SimFarm=SimFarm,
+            IRLFarm=IRLFarm,
+            path_output=path_output,
+            verbose=verbose
+            )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-d",
-        "--data_path",
+        "-i",
+        "--path_input",
         default=DEFAULT_DATA_DIR,
         help="Specify path to directory containing data for comparison.",
+        type=str
+    )
+    parser.add_argument(
+        "-o",
+        "--path_output",
+        default=DEFAULT_OUTPUT_DIR,
+        help="Specify path in which to save output plots.",
         type=str
     )
     parser.add_argument(
@@ -520,4 +596,4 @@ if __name__ == "__main__":
         type=bool
     )
     args = parser.parse_args()
-    sim2real_comp(args.data_path, args.verbose)
+    sim2real_comp(args.path_input, args.path_output, args.verbose)
