@@ -3,6 +3,7 @@ from collections.abc import Callable
 from numpy.typing import NDArray
 
 import csv
+import json
 import numpy as np
 from datetime import datetime
 
@@ -24,7 +25,6 @@ class FieldNode:
             { "X", "Y", "Altitude", "Radius", "SW", "Name" }
 
     """
-
     def __init__(self, server, configs: dict = {}):
         """
         Args:
@@ -73,8 +73,20 @@ class FieldNode:
         Returns:
             csv_configs (:obj:`list` of :obj:`str`): List of comma-separated
                 key-value pairs for each configuration provided.
+
         """
-        return ["{},{}".format(key, val) for key, val in self.info.items()]
+        # TODO: Test.
+        cmds = []
+        for key in self.info.keys():
+            #cmds.append([key, self.info[key])
+            """
+            if key != "SW":
+                cmds.append([key, self.info[key]])
+            else:
+                for swLayer in self.info[key]:
+                    cmds.append([key, swLayer])
+            """
+        return ["{},{}".format(key, val.replace(',',';')) for key, val in self.info.items()]
 
     def create(self):
         """Create a new field and link with ID reference returned by Apsim."""
@@ -168,7 +180,8 @@ class Simulation:
             Numpy array where (x,y) location is the index of the field
         """
 
-        field_configs = read_csv_file(config)
+        #field_configs = read_csv_file(config)
+        field_configs = read_json_file(config)
 
         # calculate the shape of the grid of fields
         shape_x = 0
@@ -344,6 +357,31 @@ class Simulation:
 
 # Function decs.
 ## Helpers.
+def read_json_file(fpath: str) -> list[dict]:
+    """Read configuration file
+
+    Args:
+        fpath: Path to csv file
+
+    Returns:
+        List of dictionaries for each row in the csv. The following is an example:
+        {
+            'Name': 'Field0',
+            'Radius': '0.5',
+            'SW': '1.6726570467430772',
+            'X': '0.0',
+            'Y': '0.0',
+            'Altitude': '0.0'
+        }
+    """
+    data = []
+    print(f"Reading from {fpath}...")
+    with open(fpath, "r+") as jp:
+        data = json.load(jp)
+    print("    DONE")
+    if not data:
+        print(f"WARNING!! {fpath} is an empty file!")
+    return data
 def read_csv_file(fpath: str) -> list[dict]:
     """Read configuration file
 
@@ -363,8 +401,7 @@ def read_csv_file(fpath: str) -> list[dict]:
     """
     data = []
     print(f"Reading from {fpath}...")
-    with open(fpath, "r+") as csvs:
-        reader = csv.DictReader(csvs)
+    with open(fpath, "r+") as jp:
         for row in reader:
             data.append(row)
     print("    DONE")

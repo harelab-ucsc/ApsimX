@@ -7,8 +7,8 @@ Command-line interface for OASIS simulator.
 @author     jLab
 @author     HARE Lab
 
-@date       7 May 2025
-@version    1.0.1
+@date       13 May 2025
+@version    1.0.2
 """
 import argparse
 from dataclasses import dataclass
