@@ -132,8 +132,8 @@ class Field(object):
     def __repr__(self):
         return str({
                 "Altitude": str(self.altitude),
-                #"Latitude": str(self.coordinates[0]),
-                #"Longitude": str(self.coordinates[1]),
+                "Latitude": str(self.coordinates[0]),
+                "Longitude": str(self.coordinates[1]),
                 "X": str(self.x),
                 "Y": str(self.y),
                 "Name": self.name,
@@ -452,6 +452,8 @@ class Farm(object):
                 print(str(field.swc))
                 farm_dict.append({
                     "Altitude": str(field.altitude),
+                    "Latitude": str(field.coordinates[0]),
+                    "Longitude": str(field.coordinates[1]),
                     "X": str(field.x),
                     "Y": str(field.y),
                     "Radius": str(self.radius),

@@ -36,7 +36,17 @@ class FieldNode:
         """
         self.id = None
         self.info = {}
-        for key in ["Name", "SW", "X", "Y", "Altitude"]:
+        # Add/Remove from the list below to adjust features ingested by the 
+        # OASIS sim for each Field node.
+        for key in [
+                "Name",
+                "SW",
+                "Latitude",
+                "Longitude",
+                "X", 
+                "Y", 
+                "Altitude"
+                ]:
             self.info[key] = configs[key]
         # TODO(nubby): Make the radius/area settings better.
         self.info["Area"] = str((float(configs["Radius"]) * 2) ** 2)
@@ -170,6 +180,8 @@ class Simulation:
             "SW": "(float)",
             "X": "(float)",
             "Y": "(float)",
+            "Latitude": "(float)"
+            "Longitude": "(float)"
             "Altitude": "(float)"
             }...]
 
@@ -179,18 +191,17 @@ class Simulation:
         Returns:
             Numpy array where (x,y) location is the index of the field
         """
-
         #field_configs = read_csv_file(config)
         field_configs = read_json_file(config)
 
-        # calculate the shape of the grid of fields
+        # Calculate the shape of the grid of fields.
         shape_x = 0
         shape_y = 0
         for config in field_configs:
             shape_x = max(shape_x, int(float(config["X"])))
             shape_y = max(shape_y, int(float(config["Y"])))
 
-        # create 2d array of fields
+        # Create 2d array of fields.
         fields = np.empty((shape_x + 1, shape_y + 1), dtype=FieldNode)
         for config in field_configs:
             field = FieldNode(server=self.apsim, configs=config)
@@ -212,7 +223,6 @@ class Simulation:
         Raises:
             NotImplementedError: When action does not refer to an implemented action
         """
-
         if action in dir(self):
             if date in self.action_list:
                 self.action_list[date].append([getattr(self, action), args])
@@ -307,7 +317,7 @@ class Simulation:
 
             # NOTE Order does not matter between the gets and the actions.
             # Actions are added to a queue that runs on the "DoManagement" event
-            # within Apsim
+            # within Apsim.
 
             # call all actions specified on the date
             if date in self.action_list:
