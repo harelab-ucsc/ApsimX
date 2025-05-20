@@ -146,7 +146,7 @@ class Field(object):
 Class for holding details about the simulation together.
 """
 class Farm(object):
-    def __init__(self, apsimx_path: str = "", sensor_data_path: str = ""):
+    def __init__(self, path_apsimx: str = "", path_dir_geojson: str = ""):
         self.altitude = None 
         self.latitude = None 
         self.longitude = None 
@@ -161,8 +161,8 @@ class Farm(object):
         self.fields_margin = 6      # Number of Fields bordering the Farm on
                                     # each side.
 
-        self.apsimx_path = apsimx_path
-        self.sensor_data_dir_path = sensor_data_path
+        self.path_apsimx = path_apsimx
+        self.path_dir_geojson = path_dir_geojson
         # Import configs from .apsimx file if provided.
         self._import_apsimx()
         self.load_sensor_dir()
@@ -184,7 +184,7 @@ class Farm(object):
     """
     def _import_apsimx(self):
         try:
-            with open(self.apsimx_path, 'r') as apxp:
+            with open(self.path_apsimx, 'r') as apxp:
                 configs = json.load(apxp)
                 self.altitude = _find("Altitude", configs)
                 self.latitude = _find("Latitude", configs)
@@ -198,7 +198,7 @@ class Farm(object):
                     "E": float(self.longitude),
                     "W": float(self.longitude)
                 }
-                print(f"SUCCESS: Loaded configs from {self.apsimx_path}!")
+                print(f"SUCCESS: Loaded configs from {self.path_apsimx}!")
 
         except FileNotFoundError:
             print(f"ERROR: {self.apsimx_path} does not exist!")
@@ -212,6 +212,8 @@ class Farm(object):
     @return crs         (str)       Coordinate reference system used (if any).
     """
     def _ingest_sensor_data_single_dict(self, data_json: dict) -> Sensor:
+        # The below table translates each layer simulated to a range of soil
+        # depths by layer index.
         depth_lut = {
             "0": [0.0,0.199],
             "1": [0.2,0.399],
@@ -326,15 +328,15 @@ class Farm(object):
     """
     def load_sensor_dir(self, dir_path: str = "", verbose: bool = False):
         if dir_path:
-            self.sensor_data_dir_path = dir_path
+            self.path_dir_geojson = dir_path
         else:
             print("No path given.")
-        data_files = os.listdir(path=self.sensor_data_dir_path)
+        data_files = os.listdir(path=self.path_dir_geojson)
         # Look for valid .geojson files in a directory.
         if any("geojson" in file for file in data_files):
             sensor_data_paths = [
                 os.path.join(
-                    self.sensor_data_dir_path,
+                    self.path_dir_geojson,
                     file
                 ) for file in data_files if "geojson" in file]
             # Try to load sensor data.
@@ -449,7 +451,6 @@ class Farm(object):
         farm_dict = []
         for row in self.fields:
             for field in row:
-                print(str(field.swc))
                 farm_dict.append({
                     "Altitude": str(field.altitude),
                     "Latitude": str(field.coordinates[0]),
@@ -892,36 +893,20 @@ def _sensor_data_to_initial_configs(path_input: str) -> list[dict]:
 
 """
 def generate_farm_configs(
-        path_input: str,
+        path_apsimx: str,
+        path_dir_geojson: str,
         path_output: str,
         verbose: bool = False
         ):
-    # Generate initial conditions from sensor data if available;
-    # else programmatically generate them from a guess.
-    configs = _sensor_data_to_initial_configs(
-            path_input=path_input) if path_input else DEFAULT_CONFIGS
-
-    # Create path if doesn't already exist.
-    dir_path = os.path.dirname(path_output)
-    if dir_path and not os.path.exists(path_output):
-        os.makedirs(os.path.dirname(path_output), exist_ok=True)
-
-    # Generate a matrix of Field node configurations based on input data.
-    farm_dict = generate_data(configs, mode="a")
-
-    # Write Farm configs to an output file.
-    # TODO(nubby): Deprecate CSV.
-    output_type = path_output.split(".")[-1]
-    if output_type == "csv":
-        generate_csv_configs(farm_dict, path_output, verbose)
-    elif output_type == "json":
-        generate_json_configs(farm_dict, path_output, verbose)
+    farm = Farm(path_apsimx=path_apsimx, path_dir_geojson=path_dir_geojson)
+    farm.build()
+    farm.export_field_configs(path_output) 
 
 
 if __name__ == "__main__":
-    apsimx_path = "/Users/nubby/Documents/Research/OASIS/sim/Tests/Simulation/ZMQ-Sync/MetompkinFarm/MetompkinFarm.apsimx"
-    geojson_path = "/Users/nubby/Documents/Research/OASIS/sim/Tools/PostProcessing/data/"
+    path_apsimx = "/Users/nubby/Documents/Research/OASIS/sim/Tests/Simulation/ZMQ-Sync/MetompkinFarm/MetompkinFarm.apsimx"
+    path_dir_geojson = "/Users/nubby/Documents/Research/OASIS/sim/Tools/PostProcessing/data/"
     output_path ="out.json"
-    farm = Farm(apsimx_path=apsimx_path, sensor_data_path=geojson_path)
+    farm = Farm(path_apsimx=path_apsimx, path_dir_geojson=geojson_path)
     farm.build()
     farm.export_field_configs(output_path) 

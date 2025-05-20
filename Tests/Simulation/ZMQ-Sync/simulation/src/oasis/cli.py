@@ -65,18 +65,22 @@ See argparser set_defaults()
     (https://docs.python.org/3/library/argparse.html#sub-commands).
 
 @param  args    Contains the members:
-                    + input     The path to input .geojson sensor data.
-                    + output    The path to an output .csv file defining
+                    + apsimx    Path to input .apsimx template path.
+                    + geojson   The path to directory containing input .geojson
+                                sensor data.
+                    + output    The path to an output .json file defining
                                 parameters for each Field node.
                     + verbose   Add verbose output.
 @todo   Rebuild to use input args.
 """
 def configure(args):
-    path_input = args.input if args.input else ""
+    path_apsimx = args.apsimx
+    path_dir_geojson = args.geojson_dir
     path_output = args.output
     verbose = args.verbose
     generate_farm_configs(
-            path_input=path_input,
+            path_apsimx=path_apsimx,
+            path_dir_geojson=path_dir_geojson,
             path_output=path_output,
             verbose=verbose
             )
@@ -131,18 +135,26 @@ def entry():
     config_parser = subparsers.add_parser("config", help="Generates field config .csv.")
     config_parser.add_argument("output", type=str, help="Path to save .csv file.")
     config_parser.add_argument(
-            "-i",
-            "--input",
+            "-a",
+            "--apsimx",
             type=str,
             action=argparse.BooleanOptionalAction,
-            default="",
-            help="Path to input .geojson files."
+            default="./Tests/Simulation/ZMQ-Sync/MetompkinFarm/MetompkinFarm.apsimx",
+            help="Path to template .apsimx file."
+            )
+    config_parser.add_argument(
+            "-g",
+            "--geojson_dir",
+            type=str,
+            #action=argparse.BooleanOptionalAction,
+            default="./sensor_data/",
+            help="Path to directory containing .geojson sensor data files."
             )
     config_parser.add_argument(
             "-v",
             "--verbose",
             type=bool,
-            action=argparse.BooleanOptionalAction,
+            #action=argparse.BooleanOptionalAction,
             default=False,
             help="Print verbose output?"
             )

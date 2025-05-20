@@ -78,7 +78,6 @@ namespace APSIM.ZMQServer
             // TODO check for null return
 
             // send string indicating we are in the setup phase
-            // TODO(nubby): redefine interface to allow for more customizeable Field creation.
             connection.SendFrame("setup");
             var next_msg = connection.ReceiveMultipartMessage();
             // Awaits the command "energize" to start the simulation.
@@ -131,9 +130,13 @@ namespace APSIM.ZMQServer
                                 );
                             }
                         };
+                        // TODO:
+                        // 1. Ingest "lat/lon" data.
+                        // 2. Test with a single sensor/field.
+                        // 3. Clean up interface.
+                        // 4. Tune based on recommendations.
                         foreach (string key in fieldConfigs.Keys)
                         {
-                            Console.WriteLine($"KEY: {key}: {fieldConfigs[key]}");
                             switch (key)
                             {
                                 case "Name":
@@ -142,33 +145,40 @@ namespace APSIM.ZMQServer
                                 case "Area":
                                     newField.Area = Convert.ToDouble(fieldConfigs[key]);
                                     break;
+                                // Extract SoilWater inputs.
                                 case "SW":
                                     Water water = soil.FindChild<Water>();
-                                    //double[] SW = new double[LL15byLayer.Length];
-                                    for (int i = 0; i < LL15byLayer.Length; i++)
-                                    {
-                                        double layerSW = Convert.ToDouble(fieldConfigs[key]);
-                                        if (layerSW < LL15byLayer[i])
-                                        {
-                                            layerSW = LL15byLayer[i];
-                                        }
-                                        if (layerSW > SATbyLayer[i])
-                                        {
-                                            layerSW = SATbyLayer[i];
-                                        }
-                                        //SW[i] = layerSW;
-                                        water.InitialValues[i] = layerSW;
-                                    };
+                                    int indexSW = 0;
+                                    // We use '; ' as a delimiter.
+                                    var swcs = fieldConfigs[key].Split("; ");
 
-                                    //water.InitialValues = SW;
-                                    // TODO(nubby) Play with ingestion from lists; if not practical, switch to ingesting one value
-                                    // at a time.
+                                    while (indexSW < swcs.Length)
+                                    {
+                                        double layerSW = Convert.ToDouble(swcs[indexSW].TrimStart('[').TrimEnd(']'));
+                                        if (layerSW < LL15byLayer[indexSW])
+                                        {
+                                            layerSW = LL15byLayer[indexSW];
+                                        }
+                                        if (layerSW > SATbyLayer[indexSW])
+                                        {
+                                            layerSW = SATbyLayer[indexSW];
+                                        }
+                                        // Set each SoilWater initial value one at a time.
+                                        water.InitialValues[indexSW] = layerSW;
+                                        indexSW += 1;
+                                    }
                                     break;
                                 case "X":
                                     newField.X = Convert.ToDouble(fieldConfigs[key]);
                                     break;
                                 case "Y":
                                     newField.Y = Convert.ToDouble(fieldConfigs[key]);
+                                    break;
+                                case "Latitude":
+                                    Console.WriteLine($"KEY: {key}: {fieldConfigs[key]}");
+                                    break;
+                                case "Longitude":
+                                    Console.WriteLine($"KEY: {key}: {fieldConfigs[key]}");
                                     break;
                                 case "Altitude":
                                     newField.Altitude = Convert.ToDouble(fieldConfigs[key]);
