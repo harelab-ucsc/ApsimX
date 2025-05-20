@@ -175,10 +175,10 @@ namespace APSIM.ZMQServer
                                     newField.Y = Convert.ToDouble(fieldConfigs[key]);
                                     break;
                                 case "Latitude":
-                                    Console.WriteLine($"KEY: {key}: {fieldConfigs[key]}");
+                                    soil.Latitude = Convert.ToDouble(fieldConfigs[key]);
                                     break;
                                 case "Longitude":
-                                    Console.WriteLine($"KEY: {key}: {fieldConfigs[key]}");
+                                    soil.Longitude = Convert.ToDouble(fieldConfigs[key]);
                                     break;
                                 case "Altitude":
                                     newField.Altitude = Convert.ToDouble(fieldConfigs[key]);
