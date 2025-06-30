@@ -71,14 +71,29 @@ class Datum:
 
 """ Sensor
 
-Storage for time series data from either a location in sim or a sensor.
+Sensor data from either a location in sim or a sensor.
 """
-@dataclass
-class Sensor:
-    coordinates:    [float, float]  #   [lat, lon]
-    data:           list[Datum]
-    depth:          float
-    name:           str
+class Sensor(object):
+    def __init__(
+            self,
+            coordinates: [float, float],    #   [lat, lon]
+            data: list[Datum],
+            depth: float,
+            layer: int,
+            name: str
+            ):
+        self.coordinates = coordinates
+        self.data = data
+        self.depth = depth
+        self.layer = layer
+        self.name = name
+
+    """ get_vwc_max()
+
+    @return Max VWC.
+    """
+    def get_vwc_max(self) -> float:
+        return max([datum.VWC for datum in self.data])
 
 ## Helper functions.
 
@@ -146,7 +161,11 @@ class Field(object):
 Class for holding details about the simulation together.
 """
 class Farm(object):
-    def __init__(self, path_apsimx: str = "", path_dir_geojson: str = ""):
+    def __init__(
+            self,
+            path_apsimx: str = "",
+            path_dir_geojson: str = "",
+            ):
         self.altitude = None 
         self.latitude = None 
         self.longitude = None 
@@ -237,6 +256,11 @@ class Farm(object):
 
         crs = None  # TODO(nubby)
         depth = data_json["features"][-1]["properties"]["depth"]
+        layer = -1  # Index of layer based on sensor depth.
+        for index, depth_range in depth_lut.items():
+            if (depth >= depth_range[0] and depth <= depth_range[1]):
+                layer = int(index)
+                break
         [data.append(Datum(
                 timestamp=datetime.strptime(
                     entry["properties"]["ts"],
@@ -250,6 +274,7 @@ class Farm(object):
             coordinates=coordinates,
             data=data,
             depth=depth,
+            layer=layer,
             name=name
         ), crs
 
@@ -322,6 +347,7 @@ class Farm(object):
         with open(data_path, "r+") as gjp:
             raw_data = geojson.load(gjp)
             sensor, crs = self._ingest_sensor_data_single_dict(raw_data)
+            print(str(sensor.get_vwc_max()))
             self.add_sensor(sensor, verbose)
 
     """ load_sensor_dir(dir_path, verbose)
@@ -381,6 +407,7 @@ class Farm(object):
                     i * 2 * self.radius - self.radius),
                                self.boundary["W"] + (
                     j * 2 * self.radius + self.radius)]
+                """
                 row.append(Field(
                     coordinates=coordinates,
                     x=j,
@@ -388,6 +415,15 @@ class Farm(object):
                     altitude=self.altitude,
                     name=f"Field{field_index}",
                     swc=self.sat))  # Initialize Fields with saturated water
+                                    # content.
+                """
+                row.append(Field(
+                    coordinates=coordinates,
+                    x=j,
+                    y=i,
+                    altitude=self.altitude,
+                    name=f"Field{field_index}",
+                    swc=self.dul))  # Initialize Fields with saturated water
                                     # content.
                 field_index += 1
             self.fields.append(row)
@@ -399,8 +435,11 @@ class Farm(object):
     """
     def _infer_field_swc(self):
         for sensor in self.sensors:
+            # Get the location of a given sensor.
             [x, y] = self._get_field_indices(sensor.coordinates)
-            
+            # Find the initial SWC at that location.
+            # TODO: Make all SWC/VWC/SW conventions align.
+            swc = [sensor.data[0].VWC for _ in range(len(self.dul))]
 
     """ build()
 
@@ -467,6 +506,13 @@ class Farm(object):
             json.dump(farm_dict, po, indent=4)
         print(f"Grist millt upon {path_output}.") if verbose else print("DONE.")
 
+    """ export_apsimx(path_output)
+
+    @param  path_output
+    """
+    def export_apsimx(self, path_output: str, verbose: bool = False):
+        pass
+
 """ generate_json_configs(farm_dict, path_output)
 
 Write the details of a flight plan to a JSON file.
@@ -486,18 +532,7 @@ def generate_json_configs(
     print(f"Grist millt upon {path_output}.") if verbose else print("DONE.")
 
 
-"""
-    field_config = {
-            "Name": "",
-            "Radius": "",
-            "SW": "",
-            "X": "",
-            "Y": "",
-            "Altitude": ""
-            }
-"""
-
-
+# Deprecate the below?
 """ generate_data(configs, mode)
 
 Grist for The Mill.
@@ -592,8 +627,6 @@ def _ingest_sensor_data_csv(data_path: str, IRLFarm: Farm):
         for row in reader:
             csv_lines += row
 
-    # TODO(nubby): Get @jtmadden's code for CSV conversion.
-    
     return None
 
 """_get_sensor_data( data_path, data_files, verbose=False) -> crs 

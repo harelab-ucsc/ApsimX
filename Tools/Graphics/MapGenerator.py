@@ -115,7 +115,8 @@ if __name__ == "__main__":
         lat_atmos_coords, lon_atmos_coords = _get_latlon_by_label("atmos")
 
         # Get the min distance between Teros sensor locations.
-        min_distance = _find_min_distance_between_coords(lat_teros_coords)
+        min_distance = _find_min_distance_between_coords(
+                zip(lat_teros_coords,lon_teros_coords))
         print(min_distance)
 
         # 'bo' for blue, 'yo' for yellow, 'ro' for red circles.
@@ -148,5 +149,6 @@ if __name__ == "__main__":
 
         # Show the plot.
         plt.legend()
-        plt.show()
+        #plt.show()
+        plt.savefig(f"UCSCFarmHaybarnField_SensorAndLoggerLocations_WGS84.png")
 

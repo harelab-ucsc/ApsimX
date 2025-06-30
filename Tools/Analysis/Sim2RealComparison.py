@@ -27,7 +27,8 @@ from matplotlib import pyplot as plt
 DEFAULT_DATA_DIR = "./data/"
 DEFAULT_OUTPUT_DIR = "./out/"
 DEFAULT_TOLERANCE = 0.0001      # Tolerance in coordinates for locations.
-DEFAULT_LABEL = "simpleMean"
+#DEFAULT_LABEL = "DUL min; uniform"
+DEFAULT_LABEL = "test"
 
 DEFAULT_MM_TO_LAYER = 200       # Encoding of depth until we can encode TIFF
                                 # files with depth data in Apsim.
@@ -281,6 +282,7 @@ def _ingest_sim_data_tiff(
         for file in data_paths:
             try:
                 check = regex.match(file)
+                print(file)
                 depth_code = check.group(1)
                 depth_range = depth_lut[depth_code]
             except AttributeError:
@@ -435,8 +437,8 @@ def plot_irl_vs_sim_vwc_raw(
               f"[{DEFAULT_LABEL}]")
 
     ts = datetime.today().strftime("%Y%m%d")
-    plt.savefig(f"{path_output}/{ts}-{irl_sensor.name}.png")
-    #plt.show()
+    #plt.savefig(f"{path_output}/{ts}-{irl_sensor.name}.png")
+    plt.show()
     plt.close()
 
 """plot_irl_vs_sim_vwc_deriv(irl_sensor, sim_sensor, path_output)
@@ -472,8 +474,8 @@ def plot_irl_vs_sim_vwc_deriv(
               f"[{DEFAULT_LABEL}]")
 
     ts = datetime.today().strftime("%Y%m%d")
-    plt.savefig(f"{path_output}/{ts}-{irl_sensor.name}-dt.png")
-    #plt.show()
+    #plt.savefig(f"{path_output}/{ts}-{irl_sensor.name}-dt.png")
+    plt.show()
     plt.close()
 
 """plot_irl_vs_sim_vwc_delta(irl_sensor, sim_sensor)
@@ -501,8 +503,8 @@ def plot_irl_vs_sim_vwc_delta(
               f"[{DEFAULT_LABEL}]")
 
     ts = datetime.today().strftime("%Y%m%d")
-    plt.savefig(f"{path_output}/{ts}-{irl_sensor.name}-delta.png")
-    #plt.show()
+    #plt.savefig(f"{path_output}/{ts}-{irl_sensor.name}-delta.png")
+    plt.show()
     plt.close()
 
 

@@ -1,0 +1,4 @@
+# Any input or output files from the raster generation should be excluded.
+*.tif
+*.png
+*.csv

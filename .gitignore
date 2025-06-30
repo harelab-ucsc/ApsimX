@@ -64,7 +64,12 @@ Tests/Simulation/ZMQ-Sync/data/
 /testEnvironments.json
 .mono
 ApsimX.xml
+
 # Ignore sample data for testing.
 Tests/Simulation/ZMQ-Sync/data/*
-# Ignore data from quail testing.
-Tools/quail/data/*
+
+# Ignore tmp/ directory for now.
+tmp/*
+
+# MacOS-specific.
+*.DS_Store

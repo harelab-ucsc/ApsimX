@@ -22,8 +22,16 @@ class FieldNode:
     Attributes:
         id (int): Location (index) within Apsim list.
         info (dict): Includes the following keys:
-            { "X", "Y", "Altitude", "Radius", "SW", "Name" }
-
+        {
+            "X",
+            "Y",
+            "Altitude",
+            "Latitude",
+            "Longitude",
+            "Radius",
+            "SW",
+            "Name"
+        }
     """
     def __init__(self, server, configs: dict = {}):
         """
@@ -85,7 +93,6 @@ class FieldNode:
                 key-value pairs for each configuration provided.
 
         """
-        # TODO: Test.
         cmds = []
         for key in self.info.keys():
             #cmds.append([key, self.info[key])
@@ -96,7 +103,10 @@ class FieldNode:
                 for swLayer in self.info[key]:
                     cmds.append([key, swLayer])
             """
-        return ["{},{}".format(key, val.replace(',',';')) for key, val in self.info.items()]
+            try:
+                return ["{},{}".format(key, val.replace(',',';')) for key, val in self.info.items()]
+            except Exception as e:
+                print(e)
 
     def create(self):
         """Create a new field and link with ID reference returned by Apsim."""
@@ -392,6 +402,7 @@ def read_json_file(fpath: str) -> list[dict]:
     if not data:
         print(f"WARNING!! {fpath} is an empty file!")
     return data
+
 def read_csv_file(fpath: str) -> list[dict]:
     """Read configuration file
 
