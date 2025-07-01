@@ -138,7 +138,6 @@ def entry():
             "-a",
             "--apsimx",
             type=str,
-            action=argparse.BooleanOptionalAction,
             default="./Tests/Simulation/ZMQ-Sync/MetompkinFarm/MetompkinFarm.apsimx",
             help="Path to template .apsimx file."
             )
@@ -146,8 +145,7 @@ def entry():
             "-g",
             "--geojson_dir",
             type=str,
-            #action=argparse.BooleanOptionalAction,
-            default="./sensor_data/",
+            default="./Data/Metompkin/",
             help="Path to directory containing .geojson sensor data files."
             )
     config_parser.add_argument(

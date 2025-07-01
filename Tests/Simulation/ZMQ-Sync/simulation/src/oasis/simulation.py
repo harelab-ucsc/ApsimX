@@ -56,7 +56,8 @@ class FieldNode:
                 "Altitude"
                 ]:
             self.info[key] = configs[key]
-        # TODO(nubby): Make the radius/area settings better.
+        # TODO(nubby):  Make the area settings imported from JSON rather than
+        #               radius.
         self.info["Area"] = str((float(configs["Radius"]) * 2) ** 2)
 
         self.coords = [configs["X"], configs["Y"], configs["Altitude"]]
@@ -335,6 +336,7 @@ class Simulation:
                     action, args = self.action_list[date].pop()
                     action(*args)
 
+            ## PYTHON SWC UPDATE WITH FRIENDS/NEIGHBORS.
             # get runoff
             runoff = self.runoff()
             # loop over each element
@@ -363,6 +365,9 @@ class Simulation:
                         self.irrigate(neighbor[0], neighbor[1], 0, split_runoff)
 
             # get vwc of entire field
+            # TODO
+            # For each time step, we need a different .tif? <- Check out QGIS
+            #   import reqs.
             vwc = self.vwc()
             vwc_arr.append(vwc)
 
