@@ -108,7 +108,7 @@ def _get_coords_by_label(label: str, use_utm: bool = True) -> list[tuple]:
         return [utm.from_latlon(
             lat_coord, lon_coord
             ) for lat_coord, lon_coord in zip(lat_coords, lon_coords)]
-    return [lat_coords, lon_coords]
+    return zip(lat_coords, lon_coords)
 
 """_generate_point_from_poi(poi_coord)
 
