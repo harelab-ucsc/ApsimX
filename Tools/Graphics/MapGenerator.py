@@ -171,6 +171,12 @@ def _generate_points_from_pois(poi_coords: list[tuple]) -> dict:
         label += 1
     return {
             "type": "FeatureCollection",
+            "crs": {
+                "type": "name",
+                "properties": {
+                    "name": "urn:ogc:def:crs:EPSG::32610"
+                    }
+                },
             "features": features
             }
 
@@ -223,6 +229,12 @@ def _generate_grid_from_boundary(
     # Format as a collection.
     grid_out = {
             "type": "FeatureCollection",
+            "crs": {
+                "type": "name",
+                "properties": {
+                    "name": "urn:ogc:def:crs:EPSG::32610"
+                    }
+                },
             "features": grid
             }
     return grid_out
@@ -270,7 +282,7 @@ if __name__ == "__main__":
         print(str(gcp_coords))
 
         boundary_coords = _get_coords_by_label("boundary")
-        geojson_gridlines = _generate_grid_from_boundary(boundary_coords, 0.5)
+        geojson_gridlines = _generate_grid_from_boundary(boundary_coords, 5)
         with open("grid.geojson", "w") as gfp:
             json.dump(geojson_gridlines, gfp)
 
