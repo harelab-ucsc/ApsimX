@@ -3,6 +3,7 @@ from collections.abc import Callable
 from numpy.typing import NDArray
 
 import csv
+import json
 import numpy as np
 from datetime import datetime
 
@@ -21,10 +22,17 @@ class FieldNode:
     Attributes:
         id (int): Location (index) within Apsim list.
         info (dict): Includes the following keys:
-            { "X", "Y", "Z", "Radius", "WaterVolume", "Name" }
-
+        {
+            "X",
+            "Y",
+            "Altitude",
+            "Latitude",
+            "Longitude",
+            "Radius",
+            "SW",
+            "Name"
+        }
     """
-
     def __init__(self, server, configs: dict = {}):
         """
         Args:
@@ -32,16 +40,27 @@ class FieldNode:
                 [example_url.com] for supported configurations.
 
         TODO:
-            * Replace XYZ with GPS data and elevation/depth?
+            * Replace XY with GPS data?
         """
         self.id = None
         self.info = {}
-        for key in ["Name", "SW", "X", "Y", "Z"]:
+        # Add/Remove from the list below to adjust features ingested by the 
+        # OASIS sim for each Field node.
+        for key in [
+                "Name",
+                "SW",
+                "Latitude",
+                "Longitude",
+                "X", 
+                "Y", 
+                "Altitude"
+                ]:
             self.info[key] = configs[key]
-        # TODO(nubby): Make the radius/area settings better.
+        # TODO(nubby):  Make the area settings imported from JSON rather than
+        #               radius.
         self.info["Area"] = str((float(configs["Radius"]) * 2) ** 2)
 
-        self.coords = [configs["X"], configs["Y"], configs["Z"]]
+        self.coords = [configs["X"], configs["Y"], configs["Altitude"]]
         self.radius = configs["Radius"]
         self.name = configs["Name"]
         self.v_water = configs["SW"]
@@ -58,7 +77,7 @@ class FieldNode:
             self.info["Area"],
             self.info["X"],
             self.info["Y"],
-            self.info["Z"],
+            self.info["Altitude"],
         )
 
     def digest_configs(self, fpath: str):
@@ -73,8 +92,22 @@ class FieldNode:
         Returns:
             csv_configs (:obj:`list` of :obj:`str`): List of comma-separated
                 key-value pairs for each configuration provided.
+
         """
-        return ["{},{}".format(key, val) for key, val in self.info.items()]
+        cmds = []
+        for key in self.info.keys():
+            #cmds.append([key, self.info[key])
+            """
+            if key != "SW":
+                cmds.append([key, self.info[key]])
+            else:
+                for swLayer in self.info[key]:
+                    cmds.append([key, swLayer])
+            """
+            try:
+                return ["{},{}".format(key, val.replace(',',';')) for key, val in self.info.items()]
+            except Exception as e:
+                print(e)
 
     def create(self):
         """Create a new field and link with ID reference returned by Apsim."""
@@ -158,7 +191,9 @@ class Simulation:
             "SW": "(float)",
             "X": "(float)",
             "Y": "(float)",
-            "Z": "(float)"
+            "Latitude": "(float)"
+            "Longitude": "(float)"
+            "Altitude": "(float)"
             }...]
 
         Args:
@@ -167,17 +202,17 @@ class Simulation:
         Returns:
             Numpy array where (x,y) location is the index of the field
         """
+        #field_configs = read_csv_file(config)
+        field_configs = read_json_file(config)
 
-        field_configs = read_csv_file(config)
-
-        # calculate the shape of the grid of fields
+        # Calculate the shape of the grid of fields.
         shape_x = 0
         shape_y = 0
         for config in field_configs:
-            shape_x = max(shape_x, int(config["X"]))
-            shape_y = max(shape_y, int(config["Y"]))
+            shape_x = max(shape_x, int(float(config["X"])))
+            shape_y = max(shape_y, int(float(config["Y"])))
 
-        # create 2d array of fields
+        # Create 2d array of fields.
         fields = np.empty((shape_x + 1, shape_y + 1), dtype=FieldNode)
         for config in field_configs:
             field = FieldNode(server=self.apsim, configs=config)
@@ -199,7 +234,6 @@ class Simulation:
         Raises:
             NotImplementedError: When action does not refer to an implemented action
         """
-
         if action in dir(self):
             if date in self.action_list:
                 self.action_list[date].append([getattr(self, action), args])
@@ -294,7 +328,7 @@ class Simulation:
 
             # NOTE Order does not matter between the gets and the actions.
             # Actions are added to a queue that runs on the "DoManagement" event
-            # within Apsim
+            # within Apsim.
 
             # call all actions specified on the date
             if date in self.action_list:
@@ -302,6 +336,7 @@ class Simulation:
                     action, args = self.action_list[date].pop()
                     action(*args)
 
+            ## PYTHON SWC UPDATE WITH FRIENDS/NEIGHBORS.
             # get runoff
             runoff = self.runoff()
             # loop over each element
@@ -330,6 +365,9 @@ class Simulation:
                         self.irrigate(neighbor[0], neighbor[1], 0, split_runoff)
 
             # get vwc of entire field
+            # TODO
+            # For each time step, we need a different .tif? <- Check out QGIS
+            #   import reqs.
             vwc = self.vwc()
             vwc_arr.append(vwc)
 
@@ -344,6 +382,32 @@ class Simulation:
 
 # Function decs.
 ## Helpers.
+def read_json_file(fpath: str) -> list[dict]:
+    """Read configuration file
+
+    Args:
+        fpath: Path to csv file
+
+    Returns:
+        List of dictionaries for each row in the csv. The following is an example:
+        {
+            'Name': 'Field0',
+            'Radius': '0.5',
+            'SW': '1.6726570467430772',
+            'X': '0.0',
+            'Y': '0.0',
+            'Altitude': '0.0'
+        }
+    """
+    data = []
+    print(f"Reading from {fpath}...")
+    with open(fpath, "r+") as jp:
+        data = json.load(jp)
+    print("    DONE")
+    if not data:
+        print(f"WARNING!! {fpath} is an empty file!")
+    return data
+
 def read_csv_file(fpath: str) -> list[dict]:
     """Read configuration file
 
@@ -358,13 +422,12 @@ def read_csv_file(fpath: str) -> list[dict]:
             'SW': '1.6726570467430772',
             'X': '0.0',
             'Y': '0.0',
-            'Z': '0.0'
+            'Altitude': '0.0'
         }
     """
     data = []
     print(f"Reading from {fpath}...")
-    with open(fpath, "r+") as csvs:
-        reader = csv.DictReader(csvs)
+    with open(fpath, "r+") as jp:
         for row in reader:
             data.append(row)
     print("    DONE")

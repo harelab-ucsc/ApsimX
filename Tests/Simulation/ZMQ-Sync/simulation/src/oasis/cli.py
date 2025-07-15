@@ -1,5 +1,15 @@
 #!/usr/bin/env python
+"""
+@file       cli.py
 
+Command-line interface for OASIS simulator.
+
+@author     jLab
+@author     HARE Lab
+
+@date       13 May 2025
+@version    1.0.2
+"""
 import argparse
 from dataclasses import dataclass
 from datetime import datetime
@@ -10,7 +20,7 @@ import os
 from .apsim import ApsimController
 from .simulation import Simulation
 from .plots import plot_vwc_layer, plot_vwc_field_grid, plot_heatmap
-from .config import generate_csv_from_grist, generate_data
+from .config import generate_farm_configs
 from .raster import Rasterize
 from .metompkin import MetompkinConverter
 
@@ -18,7 +28,8 @@ from .metompkin import MetompkinConverter
 def client(args):
     """Starts oasis client
 
-    See argparser set_defaults() (https://docs.python.org/3/library/argparse.html#sub-commands)
+    See argparser set_defaults()
+        (https://docs.python.org/3/library/argparse.html#sub-commands).
     """
 
     # initialize connection
@@ -26,7 +37,7 @@ def client(args):
 
     sim = Simulation(apsim, args.config)
 
-    sim.add_action(datetime(2023, 1, 1), "irrigate", [1, 1, 0, 10000])
+    #sim.add_action(datetime(2023, 1, 1), "irrigate", [1, 1, 0, 10000])
 
     # add any commands here
     ts_arr, vwc_arr = sim.run()
@@ -35,7 +46,7 @@ def client(args):
 
     # Plot simulation.
     # TODO(nubby): Integrate irrigation with colors.
-    # plot_oasis(apsim)
+    #plot_oasis(apsim)
     #if not args.quiet:
     #    plot_vwc_layer(ts_arr, vwc_arr)
     #    plot_vwc_field_grid(ts_arr, vwc_arr)
@@ -46,39 +57,46 @@ def client(args):
     #plot_heatmap(args.anim, ts_arr, vwc_arr)
 
 
-def kraww(args):
-    """Procedurally generate a CSV file of APSIM Field configs.
+""" configure(args)
 
-    See argparser set_defaults() (https://docs.python.org/3/library/argparse.html#sub-commands)
-    """
+Procedurally generate a CSV file of APSIM Field configs.
 
-    # create path if doesn't already exist
-    dir_path = os.path.dirname(args.path)
-    if dir_path and not os.path.exists(args.path):
-        os.makedirs(os.path.dirname(args.path), exist_ok=True)
+See argparser set_defaults()
+    (https://docs.python.org/3/library/argparse.html#sub-commands).
 
-    # Number of fields in each dimension of spacetime.
-    @dataclass
-    class GristConfigs:
-        dim_x: int = 4
-        dim_y: int = 4
-        dim_z: int = 1
-
-    configs = GristConfigs()
-    grist = generate_data(configs)
-    generate_csv_from_grist(grist, args.path)
+@param  args    Contains the members:
+                    + apsimx    Path to input .apsimx template path.
+                    + geojson   The path to directory containing input .geojson
+                                sensor data.
+                    + output    The path to an output .json file defining
+                                parameters for each Field node.
+                    + verbose   Add verbose output.
+@todo   Rebuild to use input args.
+"""
+def configure(args):
+    path_apsimx = args.apsimx
+    path_dir_geojson = args.geojson_dir
+    path_output = args.output
+    verbose = args.verbose
+    generate_farm_configs(
+            path_apsimx=path_apsimx,
+            path_dir_geojson=path_dir_geojson,
+            path_output=path_output,
+            verbose=verbose
+            )
 
 def raster(args):
     """Generate tiff files vwc numpy array
 
-    See argparser set_defaults() (https://docs.python.org/3/library/argparse.html#sub-commands)
+    See argparser set_defaults()
+        (https://docs.python.org/3/library/argparse.html#sub-commands).
     """
 
     raster_arry = np.load(args.input)
     raster = Rasterize(
         raster_arry,
-        xlim=(-75.5838, -75.5833),
-        ylim=(37.7427, 37.7448),
+        xlim=(-75.6402, -75.5801),
+        ylim=(37.7205, 37.7628),
         epsg=4326,
     )
 
@@ -87,16 +105,15 @@ def raster(args):
 def metompkin(args):
     """Create a geojson files for Metompkin farm dataset
     
-    See argparser set_defaults() (https://docs.python.org/3/library/argparse.html#sub-commands)
+    See argparser set_defaults()
+        (https://docs.python.org/3/library/argparse.html#sub-commands).
     """
-
     converter = MetompkinConverter()
     converter.convert(args.path, args.json)
 
 def entry():
     """Entry point for oasis"""
-
-    # cli interface
+    # CLI interface.
     parser = argparse.ArgumentParser(description="OASIS Apsim Python client")
 
     subparsers = parser.add_subparsers(help="Subcommand", required=True)
@@ -112,12 +129,34 @@ def entry():
         "--port", type=int, default=27746, help="Server port number (default: 27746)"
     )
     client_parser.add_argument("config", type=str, help="Configuration CSV")
-    client_parser.add_argument("anim", type=str, help="Path to save heatmap animation")
+    #client_parser.add_argument("anim", type=str, help="Path to save heatmap animation")
     client_parser.set_defaults(func=client)
 
-    config_parser = subparsers.add_parser("config", help="Generates field config csv")
-    config_parser.add_argument("path", type=str, help="Path to save csv")
-    config_parser.set_defaults(func=kraww)
+    config_parser = subparsers.add_parser("config", help="Generates field config .csv.")
+    config_parser.add_argument("output", type=str, help="Path to save .csv file.")
+    config_parser.add_argument(
+            "-a",
+            "--apsimx",
+            type=str,
+            default="./Tests/Simulation/ZMQ-Sync/MetompkinFarm/MetompkinFarm.apsimx",
+            help="Path to template .apsimx file."
+            )
+    config_parser.add_argument(
+            "-g",
+            "--geojson_dir",
+            type=str,
+            default="./Data/Metompkin/",
+            help="Path to directory containing .geojson sensor data files."
+            )
+    config_parser.add_argument(
+            "-v",
+            "--verbose",
+            type=bool,
+            #action=argparse.BooleanOptionalAction,
+            default=False,
+            help="Print verbose output?"
+            )
+    config_parser.set_defaults(func=configure)
     
     metompkin_parser = subparsers.add_parser("metompkin", help="Convert metompkin dataset")
     metompkin_parser.add_argument("path", type=str, help="Path to metopkin data")
